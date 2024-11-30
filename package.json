@@ -1,29 +1,29 @@
 {
-  "name": "grid-lines",
-  "version": "0.1.0",
-  "description": "Draws grid lines as HTML canvas element (baseline, squared and more) ",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/profitlich-ch/grid-lines.git"
-  },
-  "keywords": [
-    "node",
-    "javascript",
-    "canvas",
-    "grid",
-    "grid",
-    "lines",
-    "typography",
-    "baseline"
-  ],
-  "author": "Moritz Profitlich",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/profitlich-ch/grid-lines/issues"
-  },
-  "homepage": "https://github.com/profitlich-ch/grid-lines#readme"
+    "name": "canvas-grid-lines",
+    "version": "0.2.0",
+    "description": "Draws grid lines as HTML canvas element (baseline, squared and more) ",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/profitlich-ch/canvas-grid-lines.git"
+    },
+    "keywords": [
+        "node",
+        "javascript",
+        "canvas",
+        "grid",
+        "grid",
+        "lines",
+        "typography",
+        "baseline"
+    ],
+    "author": "Moritz Profitlich",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/profitlich-ch/canvas-grid-lines/issues"
+    },
+    "homepage": "https://github.com/profitlich-ch/canvas-grid-lines#readme"
 }

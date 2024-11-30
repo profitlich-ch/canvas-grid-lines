@@ -1,4 +1,4 @@
-class gridLines {
+class canvasGridLines {
     private container: HTMLElement;
     private canvas: HTMLCanvasElement;  
     private context: CanvasRenderingContext2D;
@@ -6,7 +6,7 @@ class gridLines {
     private columns: number;
     private ratio: number;
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, columns: number) {
         this.container = container as HTMLElement;
         if (window.getComputedStyle(this.container).position === 'static') {
             this.container.style.position = 'relative';
@@ -123,4 +123,4 @@ class gridLines {
     }
 }
 
-export { gridLines };
+export { canvasGridLines };
