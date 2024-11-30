@@ -7,11 +7,12 @@ class canvasGridLines {
     private ratio: number;
 
     constructor(container: HTMLElement, columns: number) {
-        this.container = container as HTMLElement;
+        this.container = container;
+        this.columns = columns;
         if (window.getComputedStyle(this.container).position === 'static') {
             this.container.style.position = 'relative';
         }
-        this.canvas = document.createElement('canvas') as HTMLCanvasElement;
+        this.canvas = document.createElement('canvas');
         this.canvas.classList.add('test-grid__canvas');
         this.container.appendChild(this.canvas);
         this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
