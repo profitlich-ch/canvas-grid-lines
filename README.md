@@ -18,7 +18,7 @@ Multiple grids are available:
 - columns (vertical lines showing columns with gaps)
 - rows (vertical lines for columns without gaps and horizontal lines)
 
-The grid lines are set precisely onto the physical pixels of the screen thus they are always crips. This distinguishes them from lines shown by SVG background images or drawn with CSS gradients.
+The grid lines are set precisely onto the physical pixels of the screen thus they are always crisp. This distinguishes them from lines shown by SVG background images or drawn with CSS gradients.
 
 ## Install
 
