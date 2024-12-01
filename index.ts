@@ -1,15 +1,15 @@
-class canvasGridLines {
+class CanvasGridLines {
     private container: HTMLElement;
-    private canvas: HTMLCanvasElement;  
+    private columns: number;
+    private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
     private gridType: string;
-    private columns: number;
     private ratio: number;
 
     constructor(container: HTMLElement, columns: number) {
         this.container = container;
         this.columns = columns;
-        if (window.getComputedStyle(this.container).position === 'static') {
+        if (window.getComputedStyle(container).position === 'static') {
             this.container.style.position = 'relative';
         }
         this.canvas = document.createElement('canvas');
@@ -22,6 +22,11 @@ class canvasGridLines {
         window.addEventListener('resize', () => {
             this.scale();
         });
+    }
+
+    set columnCount(count: number) {
+        this.columns = count;
+        this.scale();
     }
 
     private scale() {
@@ -55,11 +60,11 @@ class canvasGridLines {
         this.context.scale(this.ratio, this.ratio);
         this.draw();
     }
-    
+
     private draw() {
         const lineWidth = 0.5
         let gridSize = (this.canvas.width / this.ratio - lineWidth) / this.columns;
-        
+
         // Draw horizontal lines 
         if (this.gridType === 'baseline' || this.gridType === 'squared') {
             for (let y = 0; y <= this.canvas.height; y += gridSize) {
@@ -67,7 +72,7 @@ class canvasGridLines {
                 this.context.lineTo(this.canvas.width, Math.round(y + lineWidth));
             }
         }
-        
+
         // Draw vertical lines 
         if (this.gridType === 'squared') {
             for (let x = 0; x <= this.canvas.width; x += gridSize) {
@@ -124,4 +129,29 @@ class canvasGridLines {
     }
 }
 
-export { canvasGridLines };
+export const canvasGridLines = {
+    grids: [] as CanvasGridLines[],
+
+    initGrid(targets: string, columns: number) {
+        if (!targets) {
+            throw new Error('No selector for elements given');
+        }
+        let elementsNodeList: NodeListOf<HTMLElement>;
+        try {
+            elementsNodeList = document.querySelectorAll<HTMLElement>(targets);
+        } catch (error) {
+            throw new Error(`Invalid selector: ${targets}`);
+        }
+        let elementsArray = Array.from(elementsNodeList);
+        this.grids = elementsArray.map(element => new CanvasGridLines(element, columns));
+
+        return this.grids;
+    },
+
+    setColumns(columns: number) {
+        this.grids.forEach(grid => {
+            grid.columnCount = columns;
+            
+        });
+    }
+}
