@@ -8,40 +8,43 @@ Draws grid lines as HTML canvas element (baseline, squared and more)
 ![forks](https://img.shields.io/github/forks/profitlich-ch/canvas-grid-lines.svg)
 
 
-## Features
-This script draws grid lines behind a given html element. It therefore creates a html `<canvas>` element. The grid is automatically adapted to the screen’s resolution (retina etc.) and redrawn any time the window is resized.
-
-Multiple grids are available:
-
-- baseline (horizontal lines)
-- squared (horizontal and vertical lines)
-- columns (vertical lines showing columns with gaps)
-- rows (vertical lines for columns without gaps and horizontal lines)
-
-The grid lines are set precisely onto the physical pixels of the screen thus they are always crisp. This distinguishes them from lines shown by SVG background images or drawn with CSS gradients.
-
 ## Install
 
-`npm install --save canvas-grid-lines`
+````
+npm install --save canvas-grid-lines
+````
 
 
-## Scripts
+## Features
 
- <!-- - **npm run test** : `echo "Error: no test specified" && exit 1` -->
+- **Multiple grid types available**:
+  - baseline (horizontal lines)
+  - squared (horizontal and vertical lines)
+  - columns (vertical lines showing columns with gaps)
+  - rows (vertical lines for columns without gaps and horizontal lines)
 
-## Dependencies
+- **Retina/high res**: The grid is automatically adapted to the screen’s resolution and redrawn any time the window is resized.
 
-no dependencies
+- **Crisp and precise**: The grid lines are set precisely onto the physical pixels of the screen thus they are always crisp. This distinguishes them from lines shown by SVG background images or drawn with CSS gradients.
+
+- **Column count updatable**: Already drawn grids may be updated with a new grid count.
 
 
-## Contributing
+# Example
 
-Contributions welcome; Please submit all pull requests the against main branch. If your pull request contains JavaScript patches or features, you should include relevant unit tests. Looking forwards to your ideas!
+````
+import { canvasGridLines } from 'canvas-grid-lines';
 
-## Author
+// querySelectorAll-compatible selector and columnCount
+let grids = canvasGridLines.initGrid('[data-grid]', 59);
 
-Moritz Profitlich
+// The columnCount may be updated, the grid will be redrawn automatically
+canvasGridLines.setColumns(29);
+````
 
-## License
+
+# License
 
  - **ISC** : http://opensource.org/licenses/ISC
+
+## Keyword 
