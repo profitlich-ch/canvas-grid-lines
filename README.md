@@ -30,7 +30,7 @@ npm install --save canvas-grid-lines
 - **Column count updatable**: Already drawn grids may be updated with a new grid count.
 
 
-# Example
+## Example
 
 ````
 import { canvasGridLines } from 'canvas-grid-lines';
@@ -43,7 +43,7 @@ canvasGridLines.setColumns(29);
 ````
 
 
-# License
+## License
 
  - **ISC** : http://opensource.org/licenses/ISC
 
