@@ -29,6 +29,8 @@ npm install --save canvas-grid-lines
 
 - **Column count updatable**: Already drawn grids may be updated with a new grid count.
 
+- **Self-placing**: A html `canvas` element will be added automatically to all html elements the script is applied to. If the given elements have no css `position`, `position: relative` will be added automatically.
+
 
 ## Example
 
