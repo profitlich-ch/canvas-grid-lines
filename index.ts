@@ -1,14 +1,23 @@
 class CanvasGridLines {
     private container: HTMLElement;
     private columns: number;
+    private lineWidth: number;
+    private color: string;
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
     private gridType: string;
     private ratio: number;
 
-    constructor(container: HTMLElement, columns: number) {
+    constructor(
+        container: HTMLElement,
+        columns: number,
+        lineWidth: number = 0.5,
+        color: string = 'red'
+    ) {
         this.container = container;
         this.columns = columns;
+        this.lineWidth = lineWidth as number;
+        this.color = color as string;
         if (window.getComputedStyle(container).position === 'static') {
             this.container.style.position = 'relative';
         }
@@ -62,22 +71,21 @@ class CanvasGridLines {
     }
 
     private draw() {
-        const lineWidth = 0.5
-        let gridSize = (this.canvas.width / this.ratio - lineWidth) / this.columns;
+        let gridSize = (this.canvas.width / this.ratio - this.lineWidth) / this.columns;
 
         // Draw horizontal lines 
         if (this.gridType === 'baseline' || this.gridType === 'squared') {
             for (let y = 0; y <= this.canvas.height; y += gridSize) {
-                this.context.moveTo(0, Math.round(y + lineWidth));
-                this.context.lineTo(this.canvas.width, Math.round(y + lineWidth));
+                this.context.moveTo(0, Math.round(y + this.lineWidth));
+                this.context.lineTo(this.canvas.width, Math.round(y + this.lineWidth));
             }
         }
 
         // Draw vertical lines 
         if (this.gridType === 'squared') {
             for (let x = 0; x <= this.canvas.width; x += gridSize) {
-                this.context.moveTo(Math.round(x + lineWidth), 0);
-                this.context.lineTo(Math.round(x + lineWidth), this.canvas.height);
+                this.context.moveTo(Math.round(x + this.lineWidth), 0);
+                this.context.lineTo(Math.round(x + this.lineWidth), this.canvas.height);
             }
         }
 
@@ -90,8 +98,8 @@ class CanvasGridLines {
             let j = 1;
             for (let x = 0; x <= this.canvas.width; x += gridSize) {
                 if (i % 5 === 0 || j % 5 === 0) {
-                    this.context.moveTo(Math.round(x + lineWidth), 0);
-                    this.context.lineTo(Math.round(x + lineWidth), this.canvas.height);
+                    this.context.moveTo(Math.round(x + this.lineWidth), 0);
+                    this.context.lineTo(Math.round(x + this.lineWidth), this.canvas.height);
                 }
                 i++;
                 j++;
@@ -107,8 +115,8 @@ class CanvasGridLines {
             let j = 1;
             for (let y = 0; y <= this.canvas.height; y += gridSize) {
                 if (i % 6 === 0 || j % 6 === 0) {
-                    this.context.moveTo(0, Math.round(y + lineWidth));
-                    this.context.lineTo(this.canvas.width, Math.round(y + lineWidth));
+                    this.context.moveTo(0, Math.round(y + this.lineWidth));
+                    this.context.lineTo(this.canvas.width, Math.round(y + this.lineWidth));
                 }
                 i++;
                 j++;
@@ -116,15 +124,15 @@ class CanvasGridLines {
             let k = 0;
             for (let x = 0; x <= this.canvas.width; x += gridSize) {
                 if (k % 5 === 0 && k !== 0) {
-                    this.context.moveTo(Math.round(x + lineWidth), 0);
-                    this.context.lineTo(Math.round(x + lineWidth), this.canvas.height);
+                    this.context.moveTo(Math.round(x + this.lineWidth), 0);
+                    this.context.lineTo(Math.round(x + this.lineWidth), this.canvas.height);
                 }
                 k++;
             }
         }
 
-        this.context.strokeStyle = 'black';
-        this.context.lineWidth = lineWidth;
+        this.context.strokeStyle = this.color;
+        this.context.lineWidth = this.lineWidth;
         this.context.stroke();
     }
 }
@@ -132,7 +140,7 @@ class CanvasGridLines {
 export const canvasGridLines = {
     grids: [] as CanvasGridLines[],
 
-    initGrid(targets: string, columns: number) {
+    initGrid(targets: string, columns: number, lineWidth: number, color: string) {
         if (!targets) {
             throw new Error('No selector for elements given');
         }
@@ -143,8 +151,7 @@ export const canvasGridLines = {
             throw new Error(`Invalid selector: ${targets}`);
         }
         let elementsArray = Array.from(elementsNodeList);
-        this.grids = elementsArray.map(element => new CanvasGridLines(element, columns));
-
+        this.grids = elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, color));
         return this.grids;
     },
 
