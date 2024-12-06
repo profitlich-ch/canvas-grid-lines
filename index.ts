@@ -2,31 +2,38 @@ class CanvasGridLines {
     private container: HTMLElement;
     private columns: number;
     private lineWidth: number;
+    private units: string;
     private color: string;
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
     private gridType: string;
-    private ratio: number;
+    private ratio: number = 0;
+    private gridHeight: number = 0;
+    private gridWidth: number = 0;
+    private canvasHeight: number= 0;
+    private canvasWidth: number = 0;
+    private lineWidthCanvas: number = 0;
 
     constructor(
         container: HTMLElement,
         columns: number,
         lineWidth: number = 0.5,
-        color: string = 'red'
+        units: string = 'layout',
+        color: string = 'black'
     ) {
         this.container = container;
         this.columns = columns;
         this.lineWidth = lineWidth as number;
+        this.units = units as string;
         this.color = color as string;
         if (window.getComputedStyle(container).position === 'static') {
             this.container.style.position = 'relative';
         }
         this.canvas = document.createElement('canvas');
-        this.canvas.classList.add('test-grid__canvas');
         this.container.appendChild(this.canvas);
         this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
         this.gridType = this.container.getAttribute('data-grid') as string;
-        this.ratio = 0 as number;
+
         this.scale();
         window.addEventListener('resize', () => {
             this.scale();
@@ -39,53 +46,65 @@ class CanvasGridLines {
     }
 
     private scale() {
-        let width = this.container.offsetWidth;
-        let height = this.container.offsetHeight;
 
-        // Handle window for SSR
+        // handle window for SSR
         if (typeof window === 'undefined') return null;
 
         // determine the actual ratio we want to draw at
         this.ratio = window.devicePixelRatio || 1;
+        
+        // set lneWidth
+        this.lineWidthCanvas = this.units === 'pixel' ? this.lineWidth / this.ratio : this.lineWidth;
+        
+        // margin for lines on the canvas edges
+        let marginX: number = ['squared', 'columns'].includes(this.gridType) ? this.lineWidthCanvas : 0;
+        let marginY: number = ['squared', 'baseline', 'rows'].includes(this.gridType) ? this.lineWidthCanvas : 0;
+        
+        this.gridHeight = this.container.offsetHeight * this.ratio;
+        this.gridWidth = this.container.offsetWidth * this.ratio;
+        this.canvasHeight = this.gridHeight + marginY;
+        this.canvasWidth = this.gridWidth + marginX;
 
-        if (devicePixelRatio !== 1) {
-            // set the 'real' canvas size to the higher width/height
-            this.canvas.width = width * this.ratio;
-            this.canvas.height = height * this.ratio;
+        // set the 'real' canvas size to the higher width/height
+        this.canvas.height = this.canvasHeight;
+        this.canvas.width = this.canvasWidth;
 
-            // then scale it back down with CSS
-            this.canvas.style.width = width + 'px';
-            this.canvas.style.height = height + 'px';
-        } else {
-            // this is a normal 1:1 device; just scale it simply
-            this.canvas.width = width;
-            this.canvas.height = height;
-            this.canvas.style.width = '';
-            this.canvas.style.height = '';
-        }
+        // then position it
+        this.canvas.style.margin = `${marginX * -0.5 / this.ratio}px ${marginY * -0.5 / this.ratio}px`;
+
+        // then scale it back down with CSS
+        this.canvas.style.width = this.canvasWidth / this.ratio + 'px';
+        this.canvas.style.height = this.canvasHeight / this.ratio + 'px';
 
         this.context.setTransform(1, 0, 0, 1, 0, 0); // Reset the transform
-        // scale the drawing context so everything will work at the higher ratio
-        this.context.scale(this.ratio, this.ratio);
         this.draw();
     }
 
     private draw() {
-        let gridSize = (this.canvas.width / this.ratio - this.lineWidth) / this.columns;
+        let gridSize = this.gridHeight / this.columns;
 
         // Draw horizontal lines 
         if (this.gridType === 'baseline' || this.gridType === 'squared') {
             for (let y = 0; y <= this.canvas.height; y += gridSize) {
-                this.context.moveTo(0, Math.round(y + this.lineWidth));
-                this.context.lineTo(this.canvas.width, Math.round(y + this.lineWidth));
+                this.context.moveTo(0, Math.round(y));
+                this.context.lineTo(this.canvas.width, Math.round(y));
             }
         }
-
+        
         // Draw vertical lines 
         if (this.gridType === 'squared') {
-            for (let x = 0; x <= this.canvas.width; x += gridSize) {
-                this.context.moveTo(Math.round(x + this.lineWidth), 0);
-                this.context.lineTo(Math.round(x + this.lineWidth), this.canvas.height);
+            let offset = this.lineWidthCanvas / 2;
+            this.context.moveTo(offset, 0);
+            this.context.lineTo(offset, this.canvasHeight);
+            let previousPosition = 0;
+            console.log(this.gridWidth, this.canvasWidth, this.lineWidthCanvas, this.ratio);
+            for (let x = 1; x <= this.columns; x += 1) {
+                let linePosition = ((this.gridWidth - previousPosition) / (this.columns - x + 1)) + previousPosition + offset;
+                // not until the line is drawn it moved onto an actual pixel
+                this.context.moveTo(Math.floor(linePosition), 0);
+                this.context.lineTo(Math.floor(linePosition), this.canvasHeight);
+                console.log(x, linePosition);
+                previousPosition = linePosition;
             }
         }
 
@@ -98,8 +117,8 @@ class CanvasGridLines {
             let j = 1;
             for (let x = 0; x <= this.canvas.width; x += gridSize) {
                 if (i % 5 === 0 || j % 5 === 0) {
-                    this.context.moveTo(Math.round(x + this.lineWidth), 0);
-                    this.context.lineTo(Math.round(x + this.lineWidth), this.canvas.height);
+                    this.context.moveTo(Math.round(x + this.lineWidthCanvas / 2), 0);
+                    this.context.lineTo(Math.round(x + this.lineWidthCanvas / 2), this.canvas.height);
                 }
                 i++;
                 j++;
@@ -115,8 +134,8 @@ class CanvasGridLines {
             let j = 1;
             for (let y = 0; y <= this.canvas.height; y += gridSize) {
                 if (i % 6 === 0 || j % 6 === 0) {
-                    this.context.moveTo(0, Math.round(y + this.lineWidth));
-                    this.context.lineTo(this.canvas.width, Math.round(y + this.lineWidth));
+                    this.context.moveTo(0, Math.round(y + this.lineWidthCanvas));
+                    this.context.lineTo(this.canvas.width, Math.round(y + this.lineWidthCanvas));
                 }
                 i++;
                 j++;
@@ -124,15 +143,15 @@ class CanvasGridLines {
             let k = 0;
             for (let x = 0; x <= this.canvas.width; x += gridSize) {
                 if (k % 5 === 0 && k !== 0) {
-                    this.context.moveTo(Math.round(x + this.lineWidth), 0);
-                    this.context.lineTo(Math.round(x + this.lineWidth), this.canvas.height);
+                    this.context.moveTo(Math.round(x + this.lineWidthCanvas), 0);
+                    this.context.lineTo(Math.round(x + this.lineWidthCanvas), this.canvas.height);
                 }
                 k++;
             }
         }
 
         this.context.strokeStyle = this.color;
-        this.context.lineWidth = this.lineWidth;
+        this.context.lineWidth = this.lineWidthCanvas;
         this.context.stroke();
     }
 }
@@ -140,7 +159,7 @@ class CanvasGridLines {
 export const canvasGridLines = {
     grids: [] as CanvasGridLines[],
 
-    initGrid(targets: string, columns: number, lineWidth: number, color: string) {
+    initGrid(targets: string, columns: number, lineWidth: number, units: string, color: string) {
         if (!targets) {
             throw new Error('No selector for elements given');
         }
