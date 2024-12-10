@@ -8,13 +8,6 @@ Draws grid lines as HTML canvas element (baseline, squared and more)
 ![forks](https://img.shields.io/github/forks/profitlich-ch/canvas-grid-lines.svg)
 
 
-## Install
-
-````
-npm install --save canvas-grid-lines
-````
-
-
 ## Features
 
 - **Multiple grid types available**:
@@ -32,17 +25,59 @@ npm install --save canvas-grid-lines
 - **Self-placing**: A html `canvas` element will be added automatically to all html elements the script is applied to. If the given elements have no css `position`, `position: relative` will be added automatically.
 
 
-## Example
+## Installation
 
-````
+```
+npm install --save canvas-grid-lines
+```
+
+## Usage
+
+### HTML 
+```html
+<div data-grid="squared"></div>
+```
+
+
+### Initialize the grid(s)
+```javascript
 import { canvasGridLines } from 'canvas-grid-lines';
 
-// querySelectorAll-compatible selector and columnCount
-let grids = canvasGridLines.initGrid('[data-grid]', 59);
+let grids = canvasGridLines.initGrid(
+    '[data-grid]',
+    59,
+    1,
+    canvasGridLines.Units.LayoutPixel,
+    false,
+    '#000000'
+);
+```
 
-// The columnCount may be updated, the grid will be redrawn automatically
+### Updating the columnCount
+The grid will be redrawn automatically
+```javascript
 canvasGridLines.setColumns(29);
-````
+```
+
+
+## Configuration
+### HTML elements to be used
+Any `querySelectorAll`-compatible selector may be given. In the example code above the data attribute needed for the grid type is used.
+
+### Grid Type
+The grid type is read from a mandatory data attribute `data-grid`and may be of the following values: `baseline`, `squared`, `columns`, `rows`
+
+### Line width
+Line width as integer or float.
+
+### Units (optional, default: LayoutPixel)
+The units parameter tells the script how to interpret the line width: either layout size (as in CSS) or physical pixels.
+
+### Extend (optional, default: false)
+Lines are always drawn onto the center of the grid calculated with zero line width. The sides of thicker lines thus protrude the html element. This parameter controls whether the ends of lines will also be extended. 
+
+### Color (optional, default: black)
+A [CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) setting the lines’ color.
 
 
 ## License
