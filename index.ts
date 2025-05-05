@@ -198,7 +198,7 @@ export const canvasGridLines = {
     Units,
     grids: [] as CanvasGridLines[],
 
-    initGrid(
+    initGridSelector(
         targets: string,
         columns: number,
         lineWidth: number,
@@ -218,6 +218,21 @@ export const canvasGridLines = {
         let elementsArray = Array.from(elementsNodeList);
         this.grids = elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, units, extend, color));
         return this.grids;
+    },
+
+    initGridElement(
+        target: HTMLElement,
+        columns: number,
+        lineWidth: number,
+        units: Units,
+        extend: boolean,
+        color: string
+    ) {
+        if (!target) {
+            throw new Error('No selector for element given');
+        }
+        this.grid = new CanvasGridLines(target, columns, lineWidth, units, extend, color);
+        return this.grid;
     },
 
     setColumns(columns: number) {
