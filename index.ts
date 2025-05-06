@@ -198,41 +198,33 @@ export const canvasGridLines = {
     Units,
     grids: [] as CanvasGridLines[],
 
-    initGridSelector(
-        targets: string,
+    initGrid(
+        targets: string | HTMLElement,
         columns: number,
         lineWidth: number,
         units: Units,
         extend: boolean,
         color: string
     ) {
-        if (!targets) {
-            throw new Error('No selector for elements given');
+        let elementsArray: HTMLElement[];
+        if (typeof targets === 'string') {
+            if (!targets.trim()) {
+                throw new Error('No selector for elements given');
+            }
+            let elementsNodeList: NodeListOf<HTMLElement>;
+            try {
+                elementsNodeList = document.querySelectorAll<HTMLElement>(targets);
+            } catch (error) {
+                throw new Error(`Invalid selector: ${targets}`);
+            }
+            elementsArray = Array.from(elementsNodeList);
+        } else if (targets instanceof HTMLElement) {
+            elementsArray = [targets];
+        } else {
+            throw new Error('Invalid target type: must be a selector string or HTMLElement');
         }
-        let elementsNodeList: NodeListOf<HTMLElement>;
-        try {
-            elementsNodeList = document.querySelectorAll<HTMLElement>(targets);
-        } catch (error) {
-            throw new Error(`Invalid selector: ${targets}`);
-        }
-        let elementsArray = Array.from(elementsNodeList);
         this.grids = elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, units, extend, color));
         return this.grids;
-    },
-
-    initGridElement(
-        target: HTMLElement,
-        columns: number,
-        lineWidth: number,
-        units: Units,
-        extend: boolean,
-        color: string
-    ) {
-        if (!target) {
-            throw new Error('No selector for element given');
-        }
-        this.grid = new CanvasGridLines(target, columns, lineWidth, units, extend, color);
-        return this.grid;
     },
 
     setColumns(columns: number) {

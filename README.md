@@ -40,10 +40,11 @@ npm install --save canvas-grid-lines
 
 
 ### Initialize the grid(s)
+#### with selector string
 ```javascript
 import { canvasGridLines } from 'canvas-grid-lines';
 
-let grids = canvasGridLines.initGrid(
+let grids = canvasGridLines.initGridSelector(
     '[data-grid]',
     59,
     1,
@@ -52,6 +53,20 @@ let grids = canvasGridLines.initGrid(
     '#000000'
 );
 ```
+#### with a single HTML Element
+```javascript
+import { canvasGridLines } from 'canvas-grid-lines';
+
+let grids = canvasGridLines.initGridElement(
+    '[data-grid]',
+    59,
+    1,
+    canvasGridLines.Units.LayoutPixel,
+    false,
+    '#000000'
+);
+```
+
 
 ### Updating the columnCount
 The grid will be redrawn automatically
