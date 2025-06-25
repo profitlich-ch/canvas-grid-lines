@@ -6,14 +6,14 @@ export enum Units {
 class CanvasGridLines {
 
     private container: HTMLElement;
-    private columns: number;
+    private columns: number = 20;
     private lineWidth: number;
     private units: Units;
     private extend: boolean;
-    private color: string;
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
-    private gridType: string;
+    private gridType: string = 'columns';
+    private color: string = '#000000';
     private ratio: number = 0;
     private gridHeight: number = 0;
     private gridWidth: number = 0;
@@ -26,15 +26,13 @@ class CanvasGridLines {
         columns: number,
         lineWidth: number = 0.5,
         units: Units = Units.LayoutPixel,
-        extend: boolean = false,
-        color: string = 'black'
+        extend: boolean = false
     ) {
         this.container = container;
         this.columns = columns;
         this.lineWidth = lineWidth as number;
         this.units = units;
         this.extend = extend;
-        this.color = color as string;
         if (window.getComputedStyle(container).position === 'static') {
             this.container.style.position = 'relative';
         }
@@ -42,7 +40,8 @@ class CanvasGridLines {
         this.container.appendChild(this.canvas);
         this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
         this.gridType = this.container.getAttribute('data-grid') as string;
-
+        this.color = this.container.getAttribute('data-grid-color') as string;
+        
         this.scale();
         window.addEventListener('resize', () => {
             this.scale();
@@ -143,7 +142,6 @@ class CanvasGridLines {
             let j = 2;
             for (let x = 1; x <= this.columns; x += 1) {
                 let linePosition = ((this.gridWidth - previousPosition) / (this.columns - x + 1)) + previousPosition;
-                console.log(linePosition)
                 if (i % 5 === 0 || j % 5 === 0) {
                     this.context.moveTo(Math.floor(linePosition + offset), 0);
                     this.context.lineTo(Math.floor(linePosition + offset), this.canvasHeight);
@@ -197,34 +195,35 @@ class CanvasGridLines {
 export const canvasGridLines = {
     Units,
     grids: [] as CanvasGridLines[],
+    elementsArray: [] as HTMLElement[],
 
     initGrid(
         targets: string | HTMLElement,
         columns: number,
         lineWidth: number,
         units: Units,
-        extend: boolean,
-        color: string
+        extend: boolean
     ) {
-        let elementsArray: HTMLElement[];
+        if (!targets) {
+            throw new Error('No selector for elements given');
+        }
         if (typeof targets === 'string') {
-            if (!targets.trim()) {
-                throw new Error('No selector for elements given');
-            }
             let elementsNodeList: NodeListOf<HTMLElement>;
             try {
-                elementsNodeList = document.querySelectorAll<HTMLElement>(targets);
+                elementsNodeList = document.querySelectorAll(targets);
             } catch (error) {
                 throw new Error(`Invalid selector: ${targets}`);
             }
-            elementsArray = Array.from(elementsNodeList);
-        } else if (targets instanceof HTMLElement) {
-            elementsArray = [targets];
+            this.elementsArray = Array.from(elementsNodeList);
         } else {
-            throw new Error('Invalid target type: must be a selector string or HTMLElement');
+            this.elementsArray.push(targets);
         }
-        this.grids = elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, units, extend, color));
-        return this.grids;
+
+        if (this.elementsArray.length) {
+            this.grids = this.elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, units, extend));
+            this.elementsArray = [];
+            return this.grids;
+        }
     },
 
     setColumns(columns: number) {
