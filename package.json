@@ -2,9 +2,16 @@
     "name": "canvas-grid-lines",
     "version": "3.0.0",
     "description": "Draws grid lines as HTML canvas element (baseline, squared and more) ",
-    "main": "index.js",
+    "main": "./dist/cjs/index.js",
+    "module": "./dist/esm/index.js",
+    "types": "./dist/esm/index.d.ts",
+    "files": [
+        "/dist"
+    ],
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "clean": "rm -rf dist",
+        "build": "npm run clean && tsc -p tsconfig.json && tsc -p tsconfig.cjs.json",
+        "prepublishOnly": "npm run build"
     },
     "repository": {
         "type": "git",
@@ -25,5 +32,8 @@
     "bugs": {
         "url": "https://github.com/profitlich-ch/canvas-grid-lines/issues"
     },
-    "homepage": "https://github.com/profitlich-ch/canvas-grid-lines#readme"
+    "homepage": "https://github.com/profitlich-ch/canvas-grid-lines#readme",
+    "devDependencies": {
+        "typescript": "^5.0.0"
+    }
 }

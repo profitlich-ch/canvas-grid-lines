@@ -1,0 +1,9 @@
+# Ignoriere Konfigurationsdateien
+tsconfig.json
+tsconfig.cjs.json
+
+# Ignoriere den Quellcode-Ordner
+/src
+
+# Ignoriere Node-Module
+/node_modules
