@@ -4,9 +4,7 @@ export var Units;
     Units["DevicePixel"] = "devicePixel";
 })(Units || (Units = {}));
 class CanvasGridLines {
-    constructor(container, columns, lineWidth = 0.5, units = Units.LayoutPixel, extend = false) {
-        this.gridType = 'columns';
-        this.color = '#000000';
+    constructor(container, columns, lineWidth = 0.5, units = Units.LayoutPixel, extend = false, overrideGridType) {
         this.ratio = 0;
         this.gridHeight = 0;
         this.gridWidth = 0;
@@ -21,12 +19,27 @@ class CanvasGridLines {
         this.units = units;
         this.extend = extend;
         this.resizeHandler = () => this.scale();
-        // Only initialise when element has dimesnions (is visible)
+        // Priority: JavaScript param > HTML attribute > fallback
+        if (overrideGridType) {
+            this.gridType = overrideGridType;
+        }
+        else {
+            const attrGridType = this.container.getAttribute('data-grid');
+            if (!attrGridType) {
+                console.warn('CanvasGridLines: Element has no data-grid attribute and no gridType was provided in options. Falling back to "columns".', this.container);
+                this.gridType = 'columns'; // Fallback
+            }
+            else {
+                this.gridType = attrGridType;
+            }
+        }
+        this.color = this.container.getAttribute('data-grid-color') || '#000000';
+        // Only initialise when element has dimensions (is visible)
         if (this.container.offsetWidth > 0 && this.container.offsetHeight > 0) {
             this.initialize();
         }
         else {
-            // Otherwise set viasbility observer
+            // Otherwise set visbility observer
             this.observeForVisibility();
         }
     }
@@ -192,7 +205,7 @@ export const canvasGridLines = {
     Units,
     grids: [],
     elementsArray: [],
-    initGrid({ targets, columns, lineWidth = 1, units = Units.LayoutPixel, extend = true }) {
+    initGrid({ targets, columns, lineWidth = 1, units = Units.LayoutPixel, extend = true, gridType }) {
         if (!targets) {
             throw new Error('No selector for elements given');
         }
@@ -210,7 +223,7 @@ export const canvasGridLines = {
             this.elementsArray.push(targets);
         }
         if (this.elementsArray.length) {
-            const newGrids = this.elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, units, extend));
+            const newGrids = this.elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, units, extend, gridType));
             this.grids.push(...newGrids);
             this.elementsArray = [];
             return newGrids;

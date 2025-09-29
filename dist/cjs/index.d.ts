@@ -3,15 +3,15 @@ export declare enum Units {
     DevicePixel = "devicePixel"
 }
 declare class CanvasGridLines {
-    private container;
-    private columns;
-    private lineWidth;
-    private units;
-    private extend;
+    readonly container: HTMLElement;
+    columns: number;
+    lineWidth: number;
+    readonly units: Units;
+    readonly extend: boolean;
     private canvas;
     private context;
-    private gridType;
-    private color;
+    gridType: string;
+    color: string;
     private ratio;
     private gridHeight;
     private gridWidth;
@@ -20,7 +20,7 @@ declare class CanvasGridLines {
     private lineWidthCanvas;
     private isInitialized;
     private resizeHandler;
-    constructor(container: HTMLElement, columns: number, lineWidth?: number, units?: Units, extend?: boolean);
+    constructor(container: HTMLElement, columns: number, lineWidth?: number, units?: Units, extend?: boolean, overrideGridType?: string);
     private initialize;
     private observeForVisibility;
     set columnCount(count: number);
@@ -33,12 +33,13 @@ export interface GridOptions {
     lineWidth?: number;
     units?: Units;
     extend?: boolean;
+    gridType?: string;
 }
 export declare const canvasGridLines: {
     Units: typeof Units;
     grids: CanvasGridLines[];
     elementsArray: HTMLElement[];
-    initGrid({ targets, columns, lineWidth, units, extend }: GridOptions): CanvasGridLines[] | undefined;
+    initGrid({ targets, columns, lineWidth, units, extend, gridType }: GridOptions): CanvasGridLines[] | undefined;
     setColumns(columns: number): void;
 };
 export {};
