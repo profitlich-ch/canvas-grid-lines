@@ -34,6 +34,8 @@ export class CanvasGridLines {
             }
         }
         this.color = this.container.getAttribute('data-grid-color') || '#000000';
+        const attrColumns = this.container.getAttribute('data-grid-columns');
+        this.columns = attrColumns !== null ? parseInt(attrColumns, 10) : 20;
         // Only initialise when element has dimensions (is visible)
         if (this.container.offsetWidth > 0 && this.container.offsetHeight > 0) {
             this.initialize();

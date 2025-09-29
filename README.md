@@ -25,6 +25,11 @@ Draws grid lines as HTML canvas element (baseline, squared and more)
 - **Self-placing**: A html `canvas` element will be added automatically to all html elements the script is applied to. If the given elements have no css `position`, `position: relative` will be added automatically.
 
 
+## Demo
+
+Demo available at [https://profitlich-ch.github.io/canvas-grid-lines/](https://profitlich-ch.github.io/canvas-grid-lines/)
+
+
 ## Installation
 
 ```

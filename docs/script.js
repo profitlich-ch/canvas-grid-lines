@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // You may use any kind of selector
     canvasGridLines.initGrid({
         targets: '[data-grid]',    // selector
-        columns: 29,               // columns (not lines)
         lineWidth: 4,              // line width
         units: Units.DevicePixel,  // physical pixels or layout pixels
         extend: true               // place middle of outer lines on the tagets’ edges
