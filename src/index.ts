@@ -3,7 +3,7 @@ export enum Units {
     DevicePixel = "devicePixel",
 }
 
-class CanvasGridLines {
+export class CanvasGridLines {
 
     public readonly container: HTMLElement;
     public columns: number;
@@ -300,5 +300,9 @@ export const canvasGridLines = {
         this.grids.forEach(grid => {
             grid.columnCount = columns;
         });
+    },
+
+    getGrid(element: HTMLElement): CanvasGridLines | undefined {
+        return this.grids.find(grid => grid.container === element);
     }
 }

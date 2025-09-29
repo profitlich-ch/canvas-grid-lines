@@ -237,9 +237,13 @@
             this.grids.forEach(grid => {
                 grid.columnCount = columns;
             });
+        },
+        getGrid(element) {
+            return this.grids.find(grid => grid.container === element);
         }
     };
 
+    exports.CanvasGridLines = CanvasGridLines;
     exports.canvasGridLines = canvasGridLines;
 
 }));

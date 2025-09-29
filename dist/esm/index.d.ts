@@ -2,7 +2,7 @@ export declare enum Units {
     LayoutPixel = "layoutPixel",
     DevicePixel = "devicePixel"
 }
-declare class CanvasGridLines {
+export declare class CanvasGridLines {
     readonly container: HTMLElement;
     columns: number;
     lineWidth: number;
@@ -41,5 +41,5 @@ export declare const canvasGridLines: {
     elementsArray: HTMLElement[];
     initGrid({ targets, columns, lineWidth, units, extend, gridType }: GridOptions): CanvasGridLines[] | undefined;
     setColumns(columns: number): void;
+    getGrid(element: HTMLElement): CanvasGridLines | undefined;
 };
-export {};

@@ -3,7 +3,7 @@ export var Units;
     Units["LayoutPixel"] = "layoutPixel";
     Units["DevicePixel"] = "devicePixel";
 })(Units || (Units = {}));
-class CanvasGridLines {
+export class CanvasGridLines {
     constructor(container, columns, lineWidth = 0.5, units = Units.LayoutPixel, extend = false, overrideGridType) {
         this.ratio = 0;
         this.gridHeight = 0;
@@ -233,6 +233,9 @@ export const canvasGridLines = {
         this.grids.forEach(grid => {
             grid.columnCount = columns;
         });
+    },
+    getGrid(element) {
+        return this.grids.find(grid => grid.container === element);
     }
 };
 //# sourceMappingURL=index.js.map

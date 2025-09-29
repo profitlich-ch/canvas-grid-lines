@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.canvasGridLines = exports.Units = void 0;
+exports.canvasGridLines = exports.CanvasGridLines = exports.Units = void 0;
 var Units;
 (function (Units) {
     Units["LayoutPixel"] = "layoutPixel";
@@ -204,6 +204,7 @@ class CanvasGridLines {
         this.context.stroke();
     }
 }
+exports.CanvasGridLines = CanvasGridLines;
 exports.canvasGridLines = {
     Units,
     grids: [],
@@ -236,6 +237,9 @@ exports.canvasGridLines = {
         this.grids.forEach(grid => {
             grid.columnCount = columns;
         });
+    },
+    getGrid(element) {
+        return this.grids.find(grid => grid.container === element);
     }
 };
 //# sourceMappingURL=index.js.map
