@@ -6,12 +6,12 @@ export enum Units {
 class CanvasGridLines {
 
     private container: HTMLElement;
-    private columns: number = 20;
+    private columns: number;
     private lineWidth: number;
     private units: Units;
     private extend: boolean;
-    private canvas: HTMLCanvasElement;
-    private context: CanvasRenderingContext2D;
+    private canvas!: HTMLCanvasElement;
+    private context!: CanvasRenderingContext2D;
     private gridType: string = 'columns';
     private color: string = '#000000';
     private ratio: number = 0;
@@ -20,6 +20,10 @@ class CanvasGridLines {
     private canvasHeight: number= 0;
     private canvasWidth: number = 0;
     private lineWidthCanvas: number = 0;
+    
+    // needed for postponing initialisation when element is invisible
+    private isInitialized: boolean = false;
+    private resizeHandler: () => void;
 
     constructor(
         container: HTMLElement,
@@ -33,32 +37,67 @@ class CanvasGridLines {
         this.lineWidth = lineWidth as number;
         this.units = units;
         this.extend = extend;
-        if (window.getComputedStyle(container).position === 'static') {
+        this.resizeHandler = () => this.scale();
+
+        // Only initialise when element has dimesnions (is visible)
+        if (this.container.offsetWidth > 0 && this.container.offsetHeight > 0) {
+            this.initialize();
+        } else {
+            // Otherwise set viasbility observer
+            this.observeForVisibility();
+        }
+    }
+    
+    private initialize() {
+        // prevent repetition
+        if (this.isInitialized) return;
+
+        if (window.getComputedStyle(this.container).position === 'static') {
             this.container.style.position = 'relative';
         }
         this.canvas = document.createElement('canvas');
         this.container.appendChild(this.canvas);
         this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
         this.gridType = this.container.getAttribute('data-grid') as string;
-        this.color = this.container.getAttribute('data-grid-color') as string;
+        this.color = this.container.getAttribute('data-grid-color') || '#000000';
         
+        this.isInitialized = true;
         this.scale();
-        window.addEventListener('resize', () => {
-            this.scale();
-        });
+        window.addEventListener('resize', this.resizeHandler);
+    }
+    
+    private observeForVisibility() {
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                // When element becomes visible
+                if (entry.isIntersecting) {
+                    this.initialize();
+                    // end observer as element is initialised now
+                    obs.unobserve(this.container);
+                }
+            });
+        }, { threshold: 0.01 }); // threshold > 0 for making sure element has become visible
+
+        observer.observe(this.container);
     }
 
     set columnCount(count: number) {
         this.columns = count;
-        document.addEventListener('DOMContentLoaded', () => {
+        // only apply to initialised elements
+        if (this.isInitialized) {
             this.scale();
-        });
+        }
     }
 
     private scale() {
-
         // handle window for SSR
-        if (typeof window === 'undefined') return null;
+        if (typeof window === 'undefined') return;
+        
+        // Abort if element has no dimensions.
+        // This will be the case when a formerly visible element becomes hidden
+        if (this.container.offsetHeight === 0 || this.container.offsetWidth === 0) {
+            return;
+        }
 
         // determine the actual ratio we want to draw at
         this.ratio = window.devicePixelRatio || 1;
@@ -85,12 +124,15 @@ class CanvasGridLines {
         // then scale it back down with CSS
         this.canvas.style.width = this.canvasWidth / this.ratio + 'px';
         this.canvas.style.height = this.canvasHeight / this.ratio + 'px';
-
+        
         this.context.setTransform(1, 0, 0, 1, 0, 0); // Reset the transform
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.draw();
     }
 
     private draw() {
+        this.context.beginPath();
+
         let gridSize = this.gridWidth / this.columns;
         let offset = this.lineWidthCanvas / 2;
 
@@ -186,10 +228,18 @@ class CanvasGridLines {
             }
         }
 
-        this.context.strokeStyle = this.color;
+        this.context.strokeStyle = this.color || '#000000'; // Fallback für Farbe
         this.context.lineWidth = this.lineWidthCanvas;
         this.context.stroke();
     }
+}
+
+export interface GridOptions {
+    targets: string | HTMLElement;
+    columns: number;
+    lineWidth?: number;
+    units?: Units;
+    extend?: boolean;
 }
 
 export const canvasGridLines = {
@@ -197,13 +247,13 @@ export const canvasGridLines = {
     grids: [] as CanvasGridLines[],
     elementsArray: [] as HTMLElement[],
 
-    initGrid(
-        targets: string | HTMLElement,
-        columns: number,
-        lineWidth: number,
-        units: Units,
-        extend: boolean
-    ) {
+    initGrid({
+        targets,
+        columns,
+        lineWidth = 1,
+        units = Units.LayoutPixel,
+        extend = true
+    }: GridOptions) {
         if (!targets) {
             throw new Error('No selector for elements given');
         }
@@ -220,16 +270,18 @@ export const canvasGridLines = {
         }
 
         if (this.elementsArray.length) {
-            this.grids = this.elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, units, extend));
+            const newGrids = this.elementsArray.map(element => 
+                new CanvasGridLines(element, columns, lineWidth, units, extend)
+            );
+            this.grids.push(...newGrids);
             this.elementsArray = [];
-            return this.grids;
+            return newGrids;
         }
     },
 
     setColumns(columns: number) {
         this.grids.forEach(grid => {
             grid.columnCount = columns;
-            
         });
     }
 }

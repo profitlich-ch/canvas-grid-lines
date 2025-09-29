@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Grid Lines - example</title>
+    <link rel="stylesheet" href="canvas-grid-lines.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+            color: #333;
+        }
+        .grid-container {
+            padding: 2rem;
+            margin-bottom: 2rem;
+            background-color: #f9f9f9;
+            mix-blend-mode: multiply;
+        }
+        .hidden-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Canvas Grid Lines examples</h1>
+
+    <pre>
+&lt;div
+data-grid="columns"
+data-grid-color="rgba(0, 0, 255, 0.5)" &gt;
+    </pre>
+    <div
+        class="grid-container"
+        data-grid="columns"
+        data-grid-color="rgba(0, 0, 255, 0.5)"
+    >
+        Time flies like an arrow, fruit flies like a banana.
+    </div>
+
+    <pre>
+&lt;div
+data-grid="squared"
+data-grid-color="rgba(0, 255, 0, 0.5)" &gt;
+    </pre>
+    <div
+        class="grid-container"
+        data-grid="squared"
+        data-grid-color="rgba(0, 255, 0, 0.5)"
+    >
+        Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry.
+    </div>
+
+    <button id="show-hidden-btn">Show hidden container</button>
+    <pre>
+&lt;div
+data-grid="baseline"
+data-grid-color="rgba(255, 0, 0, 0.5)" &gt;
+    </pre>
+    <div
+        id="hidden-div"
+        class="grid-container hidden-container"
+        data-grid="baseline"
+        data-grid-color="rgba(255, 0, 0, 0.5)"
+    >
+        This container was hidden at page load. Using an IntersectionObservers the grid was drawn only after making the container visible.
+    </div>
+    
+    <script type="module" src="script.js"></script>
+</body>
+</html>
