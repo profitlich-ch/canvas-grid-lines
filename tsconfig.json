@@ -8,7 +8,6 @@
         ],
         "declaration": true,
         "sourceMap": true,
-        "outDir": "./dist/esm",
         "rootDir": "./src",
         "strict": true,
         "noImplicitAny": true,

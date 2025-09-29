@@ -1,17 +1,33 @@
 {
     "name": "canvas-grid-lines",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Draws grid lines as HTML canvas element (baseline, squared and more) ",
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
+    "browser": "./dist/umd/canvas-grid-lines.js",
     "types": "./dist/esm/index.d.ts",
+    "style": "./dist/canvas-grid-lines.css",
+    "exports": {
+        ".": {
+            "import": "./dist/esm/index.js",
+            "require": "./dist/cjs/index.js",
+            "types": "./dist/esm/index.d.ts"
+        },
+        "./css": "./dist/canvas-grid-lines.css"
+    },
     "files": [
         "/dist"
     ],
     "scripts": {
         "clean": "rm -rf dist",
-        "build": "npm run clean && tsc -p tsconfig.json && tsc -p tsconfig.cjs.json",
-        "prepublishOnly": "npm run build"
+        "build:ts:esm": "tsc -p tsconfig.esm.json",
+        "build:ts:cjs": "tsc -p tsconfig.cjs.json",
+        "build:ts:umd": "rollup -c",
+        "build:scss": "sass src/styles/main.scss dist/canvas-grid-lines.css",
+        "build": "npm run clean && concurrently \"npm:build:ts:*\" \"npm:build:scss\"",
+        "postbuild": "npx concurrently \"npx copyfiles -f dist/esm/index.js docs\" \"npx copyfiles -f dist/canvas-grid-lines.css docs\"",
+        "prepublishOnly": "npm run build",
+        "start:dev": "npx serve docs"
     },
     "repository": {
         "type": "git",
@@ -34,6 +50,12 @@
     },
     "homepage": "https://github.com/profitlich-ch/canvas-grid-lines#readme",
     "devDependencies": {
+        "@rollup/plugin-node-resolve": "^16.0.1",
+        "@rollup/plugin-typescript": "^12.1.4",
+        "concurrently": "^9.2.1",
+        "copyfiles": "^2.4.1",
+        "rollup": "^4.52.3",
+        "sass": "^1.93.2",
         "typescript": "^5.0.0"
     }
 }

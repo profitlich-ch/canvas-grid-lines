@@ -33,28 +33,81 @@ npm install --save canvas-grid-lines
 
 ## Usage
 
-### HTML 
+The package supports modern ES Modules (ESM) for browsers and bundlers, legacy CommonJS (CJS) for Node.js, and comes with TypeScript types.
+
+### Direct Browser / CDN Usage
+For simple HTML projects, you can use a CDN like unpkg or copy the JS and CSS file from the `dist/umd` folder.
+
+Add the following scripts and stylesheets to your HTML `<head>`:
 ```html
-<div data-grid="squared"></div>
+<head>
+  <!-- Load the stylesheet -->
+  <link rel="stylesheet" href="[https://unpkg.com/canvas-grid-lines/dist/canvas-grid-lines.css](https://unpkg.com/canvas-grid-lines/dist/canvas-grid-lines.css)">
+  
+  <!-- Load the script -->
+  <script defer src="[https://unpkg.com/canvas-grid-lines/dist/umd/canvas-grid-lines.js](https://unpkg.com/canvas-grid-lines/dist/umd/canvas-grid-lines.js)"></script>
+</head>
+```
+Then, in a script tag before your closing `</body>` tag, you can access the library via the global canvasGridLines variable:
+```html
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // The library is available globally
+    canvasGridLines.initGrid({
+        targets: '[data-grid]',
+        columns: 12
+    });
+  });
+</script>
 ```
 
+### ES Modules / TypeScript
 
-### Initialize the grid(s)
 ```javascript
-import { canvasGridLines } from 'canvas-grid-lines';
+import { canvasGridLines, Units } from 'canvas-grid-lines';
+import 'canvas-grid-lines/css';
 
-let grids = canvasGridLines.initGrid(
-    '[data-grid]',
-    59,
-    1,
-    canvasGridLines.Units.LayoutPixel,
-    false,
-    '#000000'
-);
+document.addEventListener('DOMContentLoaded', () => {
+    canvasGridLines.initGrid({
+        targets: '[data-grid]',
+        columns: 12
+    });
+});
 ```
+
+### CommonJS (For Node.js or older build systems)
+
+```javascript
+const { canvasGridLines, Units } = require('canvas-grid-lines');
+
+canvasGridLines.initGrid({
+    targets: '[data-grid]',
+    columns: 29
+});
+```
+CSS my be included either as an import in CSS/SCSS
+````
+@import "node_modules/canvas-grid-lines/dist/canvas-grid-lines.css";
+````
+or in the HTML as `<link>` tag
+```
+<link rel="stylesheet" href="node_modules/canvas-grid-lines/dist/canvas-grid-lines.css">
+```
+
+### Prepare the HTML
+```html
+<div class="my-container"
+     data-grid="squared"
+     data-grid-color="rgba(0, 0, 255, 0.5)">
+```
+and for CommonJS
+```html
+<link rel="stylesheet" href="canvas-grid-lines.css">
+```
+
 
 ### Updating the columnCount
-The grid will be redrawn automatically
+You may change the column count of the grid any time.
 ```javascript
 canvasGridLines.setColumns(29);
 ```
@@ -70,8 +123,8 @@ The grid type is read from a mandatory data attribute `data-grid`and may be of t
 ### Line width
 Line width as integer or float.
 
-### Units (optional, default: LayoutPixel)
-The units parameter tells the script how to interpret the line width: either layout size (as in CSS) or physical pixels.
+### Units (optional, default: layoutPixel)
+The units parameter tells the script how to interpret the line width: either layout size (`layoutPixel` as in CSS) or physical pixels (`devicePixel`).
 
 ### Extend (optional, default: false)
 Lines are always drawn onto the center of the grid calculated with zero line width. The sides of thicker lines thus protrude the html element. This parameter controls whether the ends of lines will also be extended. 
@@ -83,5 +136,3 @@ A [CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
 ## License
 
  - **ISC** : http://opensource.org/licenses/ISC
-
-## Keyword 
