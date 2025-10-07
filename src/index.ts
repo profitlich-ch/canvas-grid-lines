@@ -1,60 +1,55 @@
 export enum Units {
     LayoutPixel = "layoutPixel",
-    DevicePixel = "devicePixel",
+    DevicePixel = "devicePixel"
+}
+
+interface GridOptions {
+    columns?: number;
+    lineWidth?: number;
+    gridType?: string;
+    color?: string;
+    units?: Units;
+    extend?: boolean;
+}
+
+interface InitGridOptions extends GridOptions {
+    targets: string | HTMLElement | NodeListOf<HTMLElement>;
 }
 
 export class CanvasGridLines {
-
     public readonly container: HTMLElement;
     public columns: number;
     public lineWidth: number;
-    public readonly units: Units;
     public readonly extend: boolean;
-    private canvas!: HTMLCanvasElement;
-    private context!: CanvasRenderingContext2D;
     public gridType: string;
     public color: string;
+    public readonly units: Units;
+    
     private ratio: number = 0;
     private gridHeight: number = 0;
     private gridWidth: number = 0;
-    private canvasHeight: number= 0;
+    private canvasHeight: number = 0;
     private canvasWidth: number = 0;
     private lineWidthCanvas: number = 0;
+    private canvas!: HTMLCanvasElement;
+    private context!: CanvasRenderingContext2D;
     
     // needed for postponing initialisation when element is invisible
     private isInitialized: boolean = false;
-    private resizeHandler: () => void;
+    private resizeHandler: () => void = () => this.scale();
 
     constructor(
         container: HTMLElement,
-        columns: number,
-        lineWidth: number = 0.5,
-        units: Units = Units.LayoutPixel,
-        extend: boolean = false,
-        overrideGridType?: string 
+        options: GridOptions = {}
     ) {
         this.container = container;
-        this.columns = columns;
-        this.lineWidth = lineWidth as number;
-        this.units = units;
-        this.extend = extend;
-        this.resizeHandler = () => this.scale();
-
-        // Priority: JavaScript param > HTML attribute > fallback
-        if (overrideGridType) {
-            this.gridType = overrideGridType;
-        } else {
-            const attrGridType = this.container.getAttribute('data-grid');
-            if (!attrGridType) {
-                console.warn('CanvasGridLines: Element has no data-grid attribute and no gridType was provided in options. Falling back to "columns".', this.container);
-                this.gridType = 'columns'; // Fallback
-            } else {
-                this.gridType = attrGridType;
-            }
-        }
-        this.color = this.container.getAttribute('data-grid-color') || '#000000';
-        const attrColumns = this.container.getAttribute('data-grid-columns');
-        this.columns = attrColumns !== null ? parseInt(attrColumns, 10) : 20;
+        this.columns = options.columns ?? parseInt(this.container.getAttribute('data-grid-columns') ?? '12', 10);
+        this.gridType = options.gridType ?? this.container.getAttribute('data-grid-type') ?? 'columns';
+        this.color = options.color ?? this.container.getAttribute('data-grid-color') ?? '#000000';
+        this.lineWidth = options.lineWidth ?? parseInt(this.container.getAttribute('data-grid-line') ?? '1', 10);
+        
+        this.units = options.units ?? Units.LayoutPixel;
+        this.extend = options.extend ?? true;
 
         // Only initialise when element has dimensions (is visible)
         if (this.container.offsetWidth > 0 && this.container.offsetHeight > 0) {
@@ -72,11 +67,10 @@ export class CanvasGridLines {
         if (window.getComputedStyle(this.container).position === 'static') {
             this.container.style.position = 'relative';
         }
+        this.container.setAttribute('data-grid', 'initialised');
         this.canvas = document.createElement('canvas');
         this.container.appendChild(this.canvas);
         this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
-        this.gridType = this.container.getAttribute('data-grid') as string;
-        this.color = this.container.getAttribute('data-grid-color') || '#000000';
         
         this.isInitialized = true;
         this.scale();
@@ -245,34 +239,19 @@ export class CanvasGridLines {
             }
         }
 
-        this.context.strokeStyle = this.color || '#000000'; // Fallback für Farbe
+        this.context.strokeStyle = this.color;
         this.context.lineWidth = this.lineWidthCanvas;
         this.context.stroke();
     }
 }
 
-export interface GridOptions {
-    targets: string | HTMLElement;
-    columns: number;
-    lineWidth?: number;
-    units?: Units;
-    extend?: boolean;
-    gridType?: string;
-}
-
 export const canvasGridLines = {
-    Units,
     grids: [] as CanvasGridLines[],
     elementsArray: [] as HTMLElement[],
 
-    initGrid({
-        targets,
-        columns,
-        lineWidth = 1,
-        units = Units.LayoutPixel,
-        extend = true,
-        gridType
-    }: GridOptions) {
+    initGrid(options: InitGridOptions) {
+        const { targets, ...gridOptions } = options;
+
         if (!targets) {
             throw new Error('No selector for elements given');
         }
@@ -285,12 +264,16 @@ export const canvasGridLines = {
             }
             this.elementsArray = Array.from(elementsNodeList);
         } else {
-            this.elementsArray.push(targets);
+            if (targets instanceof NodeList) {
+                this.elementsArray.push(...Array.from(targets));
+            } else {
+                this.elementsArray.push(targets);
+            }
         }
 
         if (this.elementsArray.length) {
             const newGrids = this.elementsArray.map(element => 
-                new CanvasGridLines(element, columns, lineWidth, units, extend, gridType)
+                new CanvasGridLines(element, gridOptions)
             );
             this.grids.push(...newGrids);
             this.elementsArray = [];

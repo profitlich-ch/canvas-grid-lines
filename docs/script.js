@@ -1,12 +1,12 @@
 import { canvasGridLines, Units } from './index.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initialisiere Canvas Grid Lines...');
+    console.log('Initialising Canvas Grid Lines...');
 
     // Initialise on all elements that have a data-grid attribute
     // You may use any kind of selector
     canvasGridLines.initGrid({
-        targets: '[data-grid]',    // selector
+        targets: '[data-grid-type]',    // selector
         lineWidth: 4,              // line width
         units: Units.DevicePixel,  // physical pixels or layout pixels
         extend: true               // place middle of outer lines on the tagets’ edges
