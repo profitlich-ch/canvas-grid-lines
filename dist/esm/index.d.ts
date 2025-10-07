@@ -1,26 +1,22 @@
-export declare enum Units {
-    LayoutPixel = "layoutPixel",
-    DevicePixel = "devicePixel"
-}
 interface GridOptions {
     columns?: number;
     lineWidth?: number;
     gridType?: string;
     color?: string;
-    units?: Units;
+    units?: string;
     extend?: boolean;
 }
 interface InitGridOptions extends GridOptions {
     targets: string | HTMLElement | NodeListOf<HTMLElement>;
 }
-export declare class CanvasGridLines {
+declare class CanvasGridLines {
     readonly container: HTMLElement;
     columns: number;
     lineWidth: number;
-    readonly extend: boolean;
     gridType: string;
     color: string;
-    readonly units: Units;
+    readonly units: string;
+    readonly extend: boolean;
     private ratio;
     private gridHeight;
     private gridWidth;

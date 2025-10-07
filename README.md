@@ -129,7 +129,7 @@ The grid type is read from a mandatory data attribute `data-grid-type` and may b
 Line width as integer or float.
 
 ### Units (optional, default: layoutPixel)
-The units parameter tells the script how to interpret the line width: either layout size (`layoutPixel` as in CSS) or physical pixels (`devicePixel`).
+The units parameter tells the script how to interpret the line width: either layout size (`layoutpixel` as in CSS) or physical pixels (`devicepixel`).
 
 ### Extend (optional, default: false)
 Lines are always drawn onto the center of the grid calculated with zero line width. The sides of thicker lines thus protrude the html element. This parameter controls whether the ends of lines will also be extended. 

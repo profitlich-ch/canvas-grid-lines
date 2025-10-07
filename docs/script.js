@@ -1,15 +1,16 @@
-import { canvasGridLines, Units } from './index.js';
+import { canvasGridLines } from './index.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initialising Canvas Grid Lines...');
 
-    // Initialise on all elements that have a data-grid attribute
-    // You may use any kind of selector
+    // Initialise on all elements that have a data-grid-type attribute
+    // You may use any kind of selector or even pass a single HTMLElement
     canvasGridLines.initGrid({
-        targets: '[data-grid-type]',    // selector
-        lineWidth: 4,              // line width
-        units: Units.DevicePixel,  // physical pixels or layout pixels
-        extend: true               // place middle of outer lines on the tagets’ edges
+        targets: '[data-grid-type]',
+        columns: 20,
+        lineWidth: 4,
+        units: 'devicepixel',
+        extend: true
     });
 
     // Event-Listener for the button for showing hidden container

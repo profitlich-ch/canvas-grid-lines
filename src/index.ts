@@ -1,14 +1,9 @@
-export enum Units {
-    LayoutPixel = "layoutPixel",
-    DevicePixel = "devicePixel"
-}
-
 interface GridOptions {
     columns?: number;
     lineWidth?: number;
     gridType?: string;
     color?: string;
-    units?: Units;
+    units?: string;
     extend?: boolean;
 }
 
@@ -16,14 +11,14 @@ interface InitGridOptions extends GridOptions {
     targets: string | HTMLElement | NodeListOf<HTMLElement>;
 }
 
-export class CanvasGridLines {
+class CanvasGridLines {   
     public readonly container: HTMLElement;
     public columns: number;
     public lineWidth: number;
-    public readonly extend: boolean;
     public gridType: string;
     public color: string;
-    public readonly units: Units;
+    public readonly units: string;
+    public readonly extend: boolean;
     
     private ratio: number = 0;
     private gridHeight: number = 0;
@@ -47,8 +42,8 @@ export class CanvasGridLines {
         this.gridType = options.gridType ?? this.container.getAttribute('data-grid-type') ?? 'columns';
         this.color = options.color ?? this.container.getAttribute('data-grid-color') ?? '#000000';
         this.lineWidth = options.lineWidth ?? parseInt(this.container.getAttribute('data-grid-line') ?? '1', 10);
+        this.units = options.units ?? this.container.getAttribute('data-grid-units') ?? 'layoutpixel';
         
-        this.units = options.units ?? Units.LayoutPixel;
         this.extend = options.extend ?? true;
 
         // Only initialise when element has dimensions (is visible)
@@ -114,7 +109,7 @@ export class CanvasGridLines {
         this.ratio = window.devicePixelRatio || 1;
         
         // set lineWidth
-        this.lineWidthCanvas = this.units === Units.LayoutPixel ? this.lineWidth / this.ratio : this.lineWidth;
+        this.lineWidthCanvas = this.units === 'layoutpixel' ? this.lineWidth / this.ratio : this.lineWidth;
         
         // margin for lines on the canvas edges
         let marginX: number = (['squared', 'columns'].includes(this.gridType) || this.extend === true) ? this.lineWidthCanvas : 0;
@@ -289,5 +284,5 @@ export const canvasGridLines = {
 
     getGrid(element: HTMLElement): CanvasGridLines | undefined {
         return this.grids.find(grid => grid.container === element);
-    }
+    },
 }

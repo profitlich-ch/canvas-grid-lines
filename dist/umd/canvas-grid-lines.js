@@ -4,11 +4,6 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.canvasGridLines = {}));
 })(this, (function (exports) { 'use strict';
 
-    exports.Units = void 0;
-    (function (Units) {
-        Units["LayoutPixel"] = "layoutPixel";
-        Units["DevicePixel"] = "devicePixel";
-    })(exports.Units || (exports.Units = {}));
     class CanvasGridLines {
         constructor(container, options = {}) {
             this.ratio = 0;
@@ -25,7 +20,7 @@
             this.gridType = options.gridType ?? this.container.getAttribute('data-grid-type') ?? 'columns';
             this.color = options.color ?? this.container.getAttribute('data-grid-color') ?? '#000000';
             this.lineWidth = options.lineWidth ?? parseInt(this.container.getAttribute('data-grid-line') ?? '1', 10);
-            this.units = options.units ?? exports.Units.LayoutPixel;
+            this.units = options.units ?? this.container.getAttribute('data-grid-units') ?? 'layoutpixel';
             this.extend = options.extend ?? true;
             // Only initialise when element has dimensions (is visible)
             if (this.container.offsetWidth > 0 && this.container.offsetHeight > 0) {
@@ -83,7 +78,7 @@
             // determine the actual ratio we want to draw at
             this.ratio = window.devicePixelRatio || 1;
             // set lineWidth
-            this.lineWidthCanvas = this.units === exports.Units.LayoutPixel ? this.lineWidth / this.ratio : this.lineWidth;
+            this.lineWidthCanvas = this.units === 'layoutpixel' ? this.lineWidth / this.ratio : this.lineWidth;
             // margin for lines on the canvas edges
             let marginX = (['squared', 'columns'].includes(this.gridType) || this.extend === true) ? this.lineWidthCanvas : 0;
             let marginY = ['squared', 'baseline', 'rows'].includes(this.gridType) ? this.lineWidthCanvas : 0;
@@ -231,10 +226,9 @@
         },
         getGrid(element) {
             return this.grids.find(grid => grid.container === element);
-        }
+        },
     };
 
-    exports.CanvasGridLines = CanvasGridLines;
     exports.canvasGridLines = canvasGridLines;
 
 }));
