@@ -3,17 +3,26 @@ export enum Units {
     DevicePixel = "devicePixel",
 }
 
+interface GridOptions {
+    columns?: number;
+    lineWidth?: number;
+    gridType?: string;
+    color?: string;
+    units?: Units;
+    extend?: boolean;
+}
+
 class CanvasGridLines {
 
     private container: HTMLElement;
     private columns: number;
     private lineWidth: number;
+    private gridType: string;
+    private color: string;
     private units: Units;
     private extend: boolean;
     private canvas: HTMLCanvasElement;
     private context: CanvasRenderingContext2D;
-    private gridType: string = 'columns';
-    private color: string = '#000000';
     private ratio: number = 0;
     private gridHeight: number = 0;
     private gridWidth: number = 0;
@@ -23,24 +32,23 @@ class CanvasGridLines {
 
     constructor(
         container: HTMLElement,
-        columns: number,
-        lineWidth: number = 0.5,
-        units: Units = Units.LayoutPixel,
-        extend: boolean = false
+        options: GridOptions = {}
     ) {
         this.container = container;
-        this.columns = columns;
-        this.lineWidth = lineWidth as number;
-        this.units = units;
-        this.extend = extend;
+        this.columns = options.columns ?? parseInt(this.container.getAttribute('data-grid-columns') ?? '12', 10);
+        this.gridType = options.gridType ?? this.container.getAttribute('data-grid') ?? 'columns';
+        this.color = options.color ?? this.container.getAttribute('data-grid-color') ?? '#000000';
+        
+        // Für die restlichen Properties können wir einfachere Defaults nehmen
+        this.lineWidth = options.lineWidth ?? 0.5;
+        this.units = options.units ?? Units.LayoutPixel;
+        this.extend = options.extend ?? false;
         if (window.getComputedStyle(container).position === 'static') {
             this.container.style.position = 'relative';
         }
         this.canvas = document.createElement('canvas');
         this.container.appendChild(this.canvas);
         this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
-        this.gridType = this.container.getAttribute('data-grid') as string;
-        this.color = this.container.getAttribute('data-grid-color') as string;
         
         this.scale();
         window.addEventListener('resize', () => {
@@ -199,10 +207,7 @@ export const canvasGridLines = {
 
     initGrid(
         targets: string | HTMLElement,
-        columns: number,
-        lineWidth: number,
-        units: Units,
-        extend: boolean
+        options?: GridOptions,
     ) {
         if (!targets) {
             throw new Error('No selector for elements given');
