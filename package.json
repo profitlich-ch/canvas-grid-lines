@@ -1,6 +1,6 @@
 {
     "name": "canvas-grid-lines",
-    "version": "5.1.0",
+    "version": "5.1.1",
     "description": "Draws grid lines as HTML canvas element (baseline, squared and more) ",
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
