@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.canvasGridLines = void 0;
+exports.canvasGridLines = exports.CanvasGridLines = void 0;
 class CanvasGridLines {
     constructor(container, options = {}) {
         this.ratio = 0;
@@ -185,6 +185,7 @@ class CanvasGridLines {
         this.context.stroke();
     }
 }
+exports.CanvasGridLines = CanvasGridLines;
 exports.canvasGridLines = {
     grids: [],
     elementsArray: [],

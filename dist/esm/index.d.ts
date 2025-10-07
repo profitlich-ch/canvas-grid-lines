@@ -9,7 +9,7 @@ interface GridOptions {
 interface InitGridOptions extends GridOptions {
     targets: string | HTMLElement | NodeListOf<HTMLElement>;
 }
-declare class CanvasGridLines {
+export declare class CanvasGridLines {
     readonly container: HTMLElement;
     columns: number;
     lineWidth: number;

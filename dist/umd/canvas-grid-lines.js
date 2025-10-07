@@ -229,6 +229,7 @@
         },
     };
 
+    exports.CanvasGridLines = CanvasGridLines;
     exports.canvasGridLines = canvasGridLines;
 
 }));

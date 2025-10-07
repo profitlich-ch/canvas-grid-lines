@@ -1,4 +1,4 @@
-class CanvasGridLines {
+export class CanvasGridLines {
     constructor(container, options = {}) {
         this.ratio = 0;
         this.gridHeight = 0;
