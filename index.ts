@@ -225,7 +225,7 @@ export const canvasGridLines = {
         }
 
         if (this.elementsArray.length) {
-            this.grids = this.elementsArray.map(element => new CanvasGridLines(element, columns, lineWidth, units, extend));
+            this.grids = this.elementsArray.map(element => new CanvasGridLines(element, options));
             this.elementsArray = [];
             return this.grids;
         }
