@@ -11,7 +11,7 @@ interface InitGridOptions extends GridOptions {
     targets: string | HTMLElement | NodeListOf<HTMLElement>;
 }
 
-class CanvasGridLines {   
+export class CanvasGridLines {   
     public readonly container: HTMLElement;
     public columns: number;
     public lineWidth: number;

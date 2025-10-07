@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         columns: 20,
         lineWidth: 4,
         units: 'devicepixel',
-        extend: true
+        extend: true,
     });
 
     // Event-Listener for the button for showing hidden container
