@@ -102,7 +102,7 @@ or in the HTML as `<link>` tag
 ### Prepare the HTML
 ```html
 <div class="my-container"
-     data-grid="squared"
+     data-grid-type="squared"
      data-grid-color="rgba(0, 0, 255, 0.5)">
 ```
 and for CommonJS
@@ -123,7 +123,7 @@ canvasGridLines.setColumns(29);
 Any `querySelectorAll`-compatible selector may be given. In the example code above the data attribute needed for the grid type is used.
 
 ### Grid Type
-The grid type is read from a mandatory data attribute `data-grid`and may be of the following values: `baseline`, `squared`, `columns`, `rows`
+The grid type is read from a mandatory data attribute `data-grid-type` and may be of the following values: `baseline`, `squared`, `columns`, `rows`
 
 ### Line width
 Line width as integer or float.

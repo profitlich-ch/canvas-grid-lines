@@ -36,13 +36,12 @@ class CanvasGridLines {
     ) {
         this.container = container;
         this.columns = options.columns ?? parseInt(this.container.getAttribute('data-grid-columns') ?? '12', 10);
-        this.gridType = options.gridType ?? this.container.getAttribute('data-grid') ?? 'columns';
+        this.gridType = options.gridType ?? this.container.getAttribute('data-grid-type') ?? 'columns';
         this.color = options.color ?? this.container.getAttribute('data-grid-color') ?? '#000000';
+        this.lineWidth = options.lineWidth ?? parseInt(this.container.getAttribute('data-grid-line') ?? '1', 10);
         
-        // Für die restlichen Properties können wir einfachere Defaults nehmen
-        this.lineWidth = options.lineWidth ?? 0.5;
         this.units = options.units ?? Units.LayoutPixel;
-        this.extend = options.extend ?? false;
+        this.extend = options.extend ?? true;
         if (window.getComputedStyle(container).position === 'static') {
             this.container.style.position = 'relative';
         }
