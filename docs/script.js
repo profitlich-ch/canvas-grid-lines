@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // You may use any kind of selector or even pass a single HTMLElement
     canvasGridLines.initGrid({
         targets: '[data-grid-type]',
-        columns: 20,
         lineWidth: 4,
         units: 'devicepixel',
         extend: true,

@@ -125,6 +125,15 @@ Any `querySelectorAll`-compatible selector may be given. In the example code abo
 ### Grid Type
 The grid type is read from a mandatory data attribute `data-grid-type` and may be of the following values: `baseline`, `squared`, `columns`, `rows`
 
+### Columns
+The `columns` configuration controls both the grid resolution **and** the line placement pattern. It accepts a number, a comma-separated string (used by the `data-grid-columns` HTML attribute) or a number array — and the expected number of values depends on the grid type:
+
+- `baseline`, `squared` — **1 value**: total grid columns. Example: `data-grid-columns="40"` / `columns: 40`
+- `columns` — **3 values**: `total, gap1, gap2`. Vertical lines are placed with alternating gaps. Example: `data-grid-columns="49,4,5"` produces lines at column 0, 4, 9, 13, 18, … (line · 4 · line · 5 · line · 4 · …).
+- `rows` — **5 values**: `total, h_gap1, h_gap2, v_gap1, v_gap2`. Horizontal lines follow the alternating gap pattern `h_gap1 / h_gap2`, vertical lines follow `v_gap1 / v_gap2`. Both share the same grid unit (`total`). Example: `data-grid-columns="30,5,6,4,5"`.
+
+If the number of values does not match the grid type, an error is thrown. All values must be positive integers.
+
 ### Line width
 Line width as integer or float.
 
