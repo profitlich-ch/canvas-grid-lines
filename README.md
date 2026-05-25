@@ -130,7 +130,7 @@ The `columns` configuration controls both the grid resolution **and** the line p
 
 - `baseline`, `squared` — **1 value**: total grid columns. Example: `data-grid-columns="40"` / `columns: 40`
 - `columns` — **3 values**: `total, gap1, gap2`. Vertical lines are placed with alternating gaps. Example: `data-grid-columns="49,4,5"` produces lines at column 0, 4, 9, 13, 18, … (line · 4 · line · 5 · line · 4 · …).
-- `rows` — **5 values**: `total, h_gap1, h_gap2, v_gap1, v_gap2`. Horizontal lines follow the alternating gap pattern `h_gap1 / h_gap2`, vertical lines follow `v_gap1 / v_gap2`. Both share the same grid unit (`total`). Example: `data-grid-columns="30,5,6,4,5"`.
+- `rows` — **5 values**: `total, v_gap1, v_gap2, h_gap1, h_gap2`. Vertical lines (column gaps) come first, horizontal lines (row gaps) second. Both share the same grid unit (`total`). Example: `data-grid-columns="30,4,5,5,6"`.
 
 If the number of values does not match the grid type, an error is thrown. All values must be positive integers.
 

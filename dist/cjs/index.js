@@ -1,9 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.canvasGridLines = exports.CanvasGridLines = void 0;
+/**
+ * Draws a crisp grid onto an HTML canvas appended to `container`.
+ *
+ * Each instance owns one container element and one canvas. The canvas is
+ * resized and redrawn on window resize, and on demand via the `columns` setter.
+ * Containers that are not visible at construction time are observed and
+ * initialised lazily once they enter the viewport.
+ */
 class CanvasGridLines {
     constructor(container, options = {}) {
+        /** Alternating gap pattern for horizontal lines (rows gridType only). */
         this.hGaps = null;
+        /** Alternating gap pattern for vertical lines (columns + rows gridType). */
         this.vGaps = null;
         this.ratio = 0;
         this.gridHeight = 0;
@@ -11,10 +21,11 @@ class CanvasGridLines {
         this.canvasHeight = 0;
         this.canvasWidth = 0;
         this.lineWidthCanvas = 0;
-        // needed for postponing initialisation when element is invisible
+        /** False until the canvas has been created — guards lazy initialisation. */
         this.isInitialized = false;
         this.resizeHandler = () => this.scale();
         this.container = container;
+        // For every option: explicit JS option wins, then HTML data attribute, then default.
         this.gridType = options.gridType ?? this.container.getAttribute('data-grid-type') ?? 'columns';
         this.color = options.color ?? this.container.getAttribute('data-grid-color') ?? '#000000';
         this.lineWidth = options.lineWidth ?? parseInt(this.container.getAttribute('data-grid-line') ?? '1', 10);
@@ -24,15 +35,18 @@ class CanvasGridLines {
             ?? this.container.getAttribute('data-grid-columns')
             ?? '12';
         this.applyColumns(rawColumns);
-        // Only initialise when element has dimensions (is visible)
+        // Initialise immediately if visible, otherwise defer until the container enters the viewport.
         if (this.container.offsetWidth > 0 && this.container.offsetHeight > 0) {
             this.initialize();
         }
         else {
-            // Otherwise set visbility observer
             this.observeForVisibility();
         }
     }
+    /**
+     * Normalises the `columns` input to a positive-integer array.
+     * Throws on any non-integer, non-positive or non-parseable value.
+     */
     parseColumns(raw) {
         let values;
         if (typeof raw === 'number') {
@@ -61,6 +75,10 @@ class CanvasGridLines {
         }
         return values;
     }
+    /**
+     * Verifies the parsed array has the exact length required by the grid type.
+     * Throws otherwise — there is no silent fallback.
+     */
     validateColumns(values, gridType) {
         const expected = {
             baseline: 1,
@@ -77,11 +95,15 @@ class CanvasGridLines {
                 baseline: 'total',
                 squared: 'total',
                 columns: 'total, gap1, gap2',
-                rows: 'total, h_gap1, h_gap2, v_gap1, v_gap2',
+                rows: 'total, v_gap1, v_gap2, h_gap1, h_gap2',
             }[gridType];
             throw new Error(`gridType "${gridType}" requires exactly ${want} columns value${want > 1 ? 's' : ''} (${shape})`);
         }
     }
+    /**
+     * Parses, validates and maps the `columns` input to the internal state
+     * (`columnsTotal`, `hGaps`, `vGaps`) according to the active grid type.
+     */
     applyColumns(raw) {
         const values = this.parseColumns(raw);
         this.validateColumns(values, this.gridType);
@@ -92,18 +114,23 @@ class CanvasGridLines {
             this.vGaps = [values[1], values[2]];
         }
         else if (this.gridType === 'rows') {
-            this.hGaps = [values[1], values[2]];
-            this.vGaps = [values[3], values[4]];
+            this.vGaps = [values[1], values[2]];
+            this.hGaps = [values[3], values[4]];
         }
         else {
             this.hGaps = null;
             this.vGaps = null;
         }
     }
+    /**
+     * Creates the canvas, attaches it to the container and triggers the first draw.
+     * Idempotent — repeated calls are a no-op once initialised.
+     */
     initialize() {
-        // prevent repetition
         if (this.isInitialized)
             return;
+        // The canvas is absolutely positioned over the container; the container
+        // must therefore establish a positioning context.
         if (window.getComputedStyle(this.container).position === 'static') {
             this.container.style.position = 'relative';
         }
@@ -115,58 +142,75 @@ class CanvasGridLines {
         this.scale();
         window.addEventListener('resize', this.resizeHandler);
     }
+    /**
+     * Watches a not-yet-visible container and initialises it the moment it
+     * intersects the viewport. The observer disconnects after the first hit.
+     */
     observeForVisibility() {
         const observer = new IntersectionObserver((entries, obs) => {
             entries.forEach(entry => {
-                // When element becomes visible
                 if (entry.isIntersecting) {
                     this.initialize();
-                    // end observer as element is initialised now
                     obs.unobserve(this.container);
                 }
             });
-        }, { threshold: 0.01 }); // threshold > 0 for making sure element has become visible
+        }, { threshold: 0.01 }); // > 0 so a zero-area container does not trigger
         observer.observe(this.container);
     }
+    /**
+     * Public setter for live grid updates. Re-parses the value with the same
+     * rules as the constructor and redraws if the grid is already initialised.
+     */
     set columns(value) {
         this.applyColumns(value);
-        // only apply to initialised elements
         if (this.isInitialized) {
             this.scale();
         }
     }
+    /**
+     * Resizes the canvas to match the container's current pixel dimensions
+     * (taking devicePixelRatio into account) and triggers a redraw.
+     *
+     * Called on construction, on window resize, and on every `columns` update.
+     * Aborts silently when the container has zero dimensions — this happens
+     * when a previously visible container becomes hidden.
+     */
     scale() {
-        // handle window for SSR
+        // SSR guard.
         if (typeof window === 'undefined')
             return;
-        // Abort if element has no dimensions.
-        // This will be the case when a formerly visible element becomes hidden
         if (this.container.offsetHeight === 0 || this.container.offsetWidth === 0) {
             return;
         }
-        // determine the actual ratio we want to draw at
         this.ratio = window.devicePixelRatio || 1;
-        // set lineWidth
+        // `lineWidth` is interpreted as CSS pixels (`layoutpixel`) or as physical
+        // canvas pixels (`devicepixel`); the canvas always works in physical pixels.
         this.lineWidthCanvas = this.units === 'layoutpixel' ? this.lineWidth / this.ratio : this.lineWidth;
-        // margin for lines on the canvas edges
+        // Edge lines would otherwise be clipped in half — extend the canvas by
+        // one line width along axes that carry an edge line.
         let marginX = (['squared', 'columns'].includes(this.gridType) || this.extend === true) ? this.lineWidthCanvas : 0;
         let marginY = ['squared', 'baseline', 'rows'].includes(this.gridType) ? this.lineWidthCanvas : 0;
         this.gridHeight = this.container.offsetHeight * this.ratio;
         this.gridWidth = this.container.offsetWidth * this.ratio;
         this.canvasHeight = this.gridHeight + marginY;
         this.canvasWidth = this.gridWidth + marginX;
-        // set the 'real' canvas size to the higher width/height
+        // Physical canvas size (device pixels).
         this.canvas.height = this.canvasHeight;
         this.canvas.width = this.canvasWidth;
-        // then position it
+        // Negative margins pull the oversized canvas back so it stays centred on the container.
         this.canvas.style.margin = `${marginY * -0.5 / this.ratio}px ${marginX * -0.5 / this.ratio}px`;
-        // then scale it back down with CSS
+        // CSS size (layout pixels) — the browser scales the device-pixel canvas back down.
         this.canvas.style.width = this.canvasWidth / this.ratio + 'px';
         this.canvas.style.height = this.canvasHeight / this.ratio + 'px';
-        this.context.setTransform(1, 0, 0, 1, 0, 0); // Reset the transform
+        this.context.setTransform(1, 0, 0, 1, 0, 0);
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.draw();
     }
+    /**
+     * Yields line positions (in grid units) following an alternating gap pattern.
+     * Starts at 0, then advances by `gaps[0]`, `gaps[1]`, `gaps[0]`, `gaps[1]`, …
+     * until `max` is exceeded. Example: `gaps=[2,3]` produces 0, 2, 5, 7, 10, …
+     */
     *gapPattern(max, gaps) {
         let pos = 0;
         let i = 0;
@@ -176,14 +220,17 @@ class CanvasGridLines {
             i++;
         }
     }
+    /** Draws a horizontal line at `y`, spanning the full canvas width by default. */
     horizontalLine(y, length = this.canvasWidth) {
         this.context.moveTo(0, y);
         this.context.lineTo(length, y);
     }
+    /** Draws a vertical line at `x`, spanning the full canvas height by default. */
     verticalLine(x, length = this.canvasHeight) {
         this.context.moveTo(x, 0);
         this.context.lineTo(x, length);
     }
+    /** baseline: one horizontal line per grid unit, full width. */
     drawBaseline(gridSize, offset) {
         this.horizontalLine(offset);
         for (let y = gridSize; y <= this.gridHeight; y += gridSize) {
@@ -191,8 +238,10 @@ class CanvasGridLines {
             this.horizontalLine(Math.floor(linePosition + offset));
         }
     }
+    /** squared: baseline pattern plus one vertical line per grid unit. */
     drawSquared(gridSize, offset) {
         this.drawBaseline(gridSize, offset);
+        // Vertical lines stop at the last full grid row so the bottom edge stays clean.
         const lineLength = (Math.floor(this.gridHeight / gridSize) * gridSize) + offset;
         this.verticalLine(offset, lineLength);
         let previousPosition = 0;
@@ -202,6 +251,7 @@ class CanvasGridLines {
             previousPosition = linePosition;
         }
     }
+    /** columns: vertical lines placed according to the alternating `vGaps` pattern. */
     drawColumns(gridSize, offset) {
         if (!this.vGaps)
             return;
@@ -209,6 +259,10 @@ class CanvasGridLines {
             this.verticalLine(Math.floor(col * gridSize + offset));
         }
     }
+    /**
+     * rows: horizontal lines from `hGaps`, vertical lines from `vGaps`. Both
+     * patterns share the same grid unit (`gridSize = gridWidth / columnsTotal`).
+     */
     drawRows(gridSize, offset) {
         if (!this.hGaps || !this.vGaps)
             return;
@@ -221,6 +275,10 @@ class CanvasGridLines {
             this.verticalLine(Math.floor(col * gridSize + offset), lineLength);
         }
     }
+    /**
+     * Renders the grid in a single canvas path, dispatching to the grid-type
+     * specific helper. Stroke style and width are applied after the path is built.
+     */
     draw() {
         this.context.beginPath();
         const gridSize = this.gridWidth / this.columnsTotal;
@@ -245,9 +303,22 @@ class CanvasGridLines {
     }
 }
 exports.CanvasGridLines = CanvasGridLines;
+/**
+ * Convenience facade for bulk-managing grids.
+ *
+ * Use `initGrid` to construct one `CanvasGridLines` per matched element,
+ * `setColumns` to update them all at once, and `getGrid` to look one up by
+ * its container element.
+ */
 exports.canvasGridLines = {
     grids: [],
     elementsArray: [],
+    /**
+     * Creates a `CanvasGridLines` for each element matched by `targets`
+     * (CSS selector, single HTMLElement or NodeList) and stores them in `grids`.
+     * Per-element configuration via `data-grid-*` attributes wins unless the
+     * caller passes an explicit option.
+     */
     initGrid(options) {
         const { targets, ...gridOptions } = options;
         if (!targets) {
@@ -278,6 +349,11 @@ exports.canvasGridLines = {
             return newGrids;
         }
     },
+    /**
+     * Re-applies the given `columns` value to every tracked grid. The value
+     * must satisfy each grid's `gridType` constraints — passing e.g. a single
+     * number to a mixed set including a `rows`-type grid will throw.
+     */
     setColumns(columns) {
         this.grids.forEach(grid => {
             grid.columns = columns;
