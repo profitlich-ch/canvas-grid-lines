@@ -1,5 +1,3 @@
-import { canvasGridLines } from './index.js';
-
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Initialising Canvas Grid Lines...');
 

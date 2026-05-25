@@ -38,7 +38,7 @@ data-grid-color="rgba(0, 0, 255, 0.5)" &gt;
     <div
         class="grid-container"
         data-grid-type="columns"
-        data-grid-columns="49,4,5"
+        data-grid-columns="47,5,1"
         data-grid-color="rgba(0, 0, 255, 0.5)"
     >
         Time flies like an arrow, fruit flies like a banana.
@@ -54,7 +54,7 @@ data-grid-color="rgba(0, 255, 0, 0.5)" &gt;
     <div
         class="grid-container"
         data-grid-type="squared"
-        data-grid-columns="40"
+        data-grid-columns="47"
         data-grid-color="rgba(0, 255, 0, 0.5)"
     >
         Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry. Red lorry, yellow lorry.
@@ -69,7 +69,7 @@ data-grid-color="rgba(255, 0, 0, 0.5)" &gt;
     </pre>
     <div
         class="grid-container"
-        data-grid-columns="50"
+        data-grid-columns="47"
         data-grid-type="baseline"
         data-grid-color="rgba(255, 0, 0, 0.5)"
     >
@@ -86,7 +86,7 @@ data-grid-color="rgba(255, 0, 255, 0.5)" &gt;
     <div
         class="grid-container"
         data-grid-type="rows"
-        data-grid-columns="30,4,5,5,6"
+        data-grid-columns="47,5,1,5,1"
         data-grid-color="rgba(255, 0, 255, 0.5)"
     >
         She sells sea shells at the sea shore. She sells sea shells at the sea shore. She sells sea shells at the sea shore. She sells sea shells at the sea shore. She sells sea shells at the sea shore. 
@@ -102,11 +102,13 @@ data-grid-color="rgba(0, 255, 255, 0.5)" &gt;
         id="hidden-div"
         class="grid-container hidden-container"
         data-grid-type="baseline"
+        data-grid-columns="47"
         data-grid-color="rgba(0, 255, 255, 0.5)"
     >
         This container was hidden at page load. Using an IntersectionObservers the grid was drawn after making the container visible.
     </div>
     
-    <script type="module" src="script.js"></script>
+    <script defer src="canvas-grid-lines.js"></script>
+    <script defer src="script.js"></script>
 </body>
 </html>

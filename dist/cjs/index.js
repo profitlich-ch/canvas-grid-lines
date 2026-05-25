@@ -1,13 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.canvasGridLines = exports.CanvasGridLines = void 0;
+const types_1 = require("./types");
+const constants_1 = require("./constants");
+const gridTypeConfig_1 = require("./gridTypeConfig");
+const parseColumns_1 = require("./parseColumns");
+const gapPattern_1 = require("./gapPattern");
 /**
  * Draws a crisp grid onto an HTML canvas appended to `container`.
  *
  * Each instance owns one container element and one canvas. The canvas is
- * resized and redrawn on window resize, and on demand via the `columns` setter.
- * Containers that are not visible at construction time are observed and
- * initialised lazily once they enter the viewport.
+ * resized and redrawn on window resize, and on demand via the setters for
+ * `columns`, `gridType`, `color` and `lineWidth`. Containers that are not
+ * visible at construction time are observed and initialised lazily once they
+ * enter the viewport.
  */
 class CanvasGridLines {
     constructor(container, options = {}) {
@@ -25,102 +31,41 @@ class CanvasGridLines {
         this.isInitialized = false;
         this.resizeHandler = () => this.scale();
         this.container = container;
-        // For every option: explicit JS option wins, then HTML data attribute, then default.
-        this.gridType = options.gridType ?? this.container.getAttribute('data-grid-type') ?? 'columns';
-        this.color = options.color ?? this.container.getAttribute('data-grid-color') ?? '#000000';
-        this.lineWidth = options.lineWidth ?? parseInt(this.container.getAttribute('data-grid-line') ?? '1', 10);
-        this.units = options.units ?? this.container.getAttribute('data-grid-units') ?? 'layoutpixel';
-        this.extend = options.extend ?? true;
+        // gridType — explicit option wins, then HTML data attribute, then default. Validated.
+        const gridTypeRaw = options.gridType ?? container.getAttribute('data-grid-type') ?? constants_1.DEFAULT_GRID_TYPE;
+        if (!(0, types_1.isGridType)(gridTypeRaw)) {
+            throw new Error(`Invalid gridType "${gridTypeRaw}"`);
+        }
+        this._gridType = gridTypeRaw;
+        // units — same resolution chain, validated.
+        const unitsRaw = options.units ?? container.getAttribute('data-grid-units') ?? constants_1.DEFAULT_UNITS;
+        if (!(0, types_1.isUnits)(unitsRaw)) {
+            throw new Error(`Invalid units "${unitsRaw}"`);
+        }
+        this.units = unitsRaw;
+        this._color = options.color ?? container.getAttribute('data-grid-color') ?? constants_1.DEFAULT_COLOR;
+        const lineWidthAttr = container.getAttribute('data-grid-line');
+        this._lineWidth = options.lineWidth ?? (lineWidthAttr !== null ? parseInt(lineWidthAttr, 10) : constants_1.DEFAULT_LINE_WIDTH);
+        this.extend = options.extend ?? constants_1.DEFAULT_EXTEND;
         const rawColumns = options.columns
-            ?? this.container.getAttribute('data-grid-columns')
-            ?? '12';
-        this.applyColumns(rawColumns);
+            ?? container.getAttribute('data-grid-columns')
+            ?? constants_1.DEFAULT_COLUMNS;
+        this.applyColumnsInput(rawColumns);
         // Initialise immediately if visible, otherwise defer until the container enters the viewport.
-        if (this.container.offsetWidth > 0 && this.container.offsetHeight > 0) {
+        if (container.offsetWidth > 0 && container.offsetHeight > 0) {
             this.initialize();
         }
         else {
             this.observeForVisibility();
         }
     }
-    /**
-     * Normalises the `columns` input to a positive-integer array.
-     * Throws on any non-integer, non-positive or non-parseable value.
-     */
-    parseColumns(raw) {
-        let values;
-        if (typeof raw === 'number') {
-            values = [raw];
-        }
-        else if (typeof raw === 'string') {
-            values = raw.split(',').map(s => {
-                const trimmed = s.trim();
-                const n = Number(trimmed);
-                if (!Number.isInteger(n) || n <= 0) {
-                    throw new Error(`Invalid columns value "${trimmed}": must be a positive integer`);
-                }
-                return n;
-            });
-        }
-        else if (Array.isArray(raw)) {
-            values = raw.map(n => {
-                if (!Number.isInteger(n) || n <= 0) {
-                    throw new Error(`Invalid columns value "${n}": must be a positive integer`);
-                }
-                return n;
-            });
-        }
-        else {
-            throw new Error('columns must be a number, comma-separated string, or number array');
-        }
-        return values;
-    }
-    /**
-     * Verifies the parsed array has the exact length required by the grid type.
-     * Throws otherwise — there is no silent fallback.
-     */
-    validateColumns(values, gridType) {
-        const expected = {
-            baseline: 1,
-            squared: 1,
-            columns: 3,
-            rows: 5,
-        };
-        const want = expected[gridType];
-        if (want === undefined) {
-            throw new Error(`Unknown gridType "${gridType}"`);
-        }
-        if (values.length !== want) {
-            const shape = {
-                baseline: 'total',
-                squared: 'total',
-                columns: 'total, gap1, gap2',
-                rows: 'total, v_gap1, v_gap2, h_gap1, h_gap2',
-            }[gridType];
-            throw new Error(`gridType "${gridType}" requires exactly ${want} columns value${want > 1 ? 's' : ''} (${shape})`);
-        }
-    }
-    /**
-     * Parses, validates and maps the `columns` input to the internal state
-     * (`columnsTotal`, `hGaps`, `vGaps`) according to the active grid type.
-     */
-    applyColumns(raw) {
-        const values = this.parseColumns(raw);
-        this.validateColumns(values, this.gridType);
-        this.columnsRaw = values;
-        this.columnsTotal = values[0];
-        if (this.gridType === 'columns') {
-            this.hGaps = null;
-            this.vGaps = [values[1], values[2]];
-        }
-        else if (this.gridType === 'rows') {
-            this.vGaps = [values[1], values[2]];
-            this.hGaps = [values[3], values[4]];
-        }
-        else {
-            this.hGaps = null;
-            this.vGaps = null;
-        }
+    /** Pure-helper wrapper that copies the result into the instance fields. */
+    applyColumnsInput(raw) {
+        const result = (0, parseColumns_1.applyColumns)(raw, this._gridType);
+        this.columnsTotal = result.columnsTotal;
+        this.columnsRaw = result.columnsRaw;
+        this.hGaps = result.hGaps;
+        this.vGaps = result.vGaps;
     }
     /**
      * Creates the canvas, attaches it to the container and triggers the first draw.
@@ -134,7 +79,7 @@ class CanvasGridLines {
         if (window.getComputedStyle(this.container).position === 'static') {
             this.container.style.position = 'relative';
         }
-        this.container.setAttribute('data-grid', 'initialised');
+        this.container.setAttribute(constants_1.INIT_MARKER_ATTR, 'true');
         this.canvas = document.createElement('canvas');
         this.container.appendChild(this.canvas);
         this.context = this.canvas.getContext('2d');
@@ -157,21 +102,46 @@ class CanvasGridLines {
         }, { threshold: 0.01 }); // > 0 so a zero-area container does not trigger
         observer.observe(this.container);
     }
+    get gridType() { return this._gridType; }
     /**
-     * Public setter for live grid updates. Re-parses the value with the same
-     * rules as the constructor and redraws if the grid is already initialised.
+     * Switches the grid type live. Re-derives the per-axis gap patterns from
+     * the existing `columns` value — will throw if the current `columns`
+     * length does not fit the new grid type (set a compatible `columns` first).
      */
-    set columns(value) {
-        this.applyColumns(value);
-        if (this.isInitialized) {
-            this.scale();
+    set gridType(value) {
+        if (!(0, types_1.isGridType)(value)) {
+            throw new Error(`Invalid gridType "${value}"`);
         }
+        this._gridType = value;
+        this.applyColumnsInput(this.columnsRaw);
+        if (this.isInitialized)
+            this.scale();
+    }
+    get color() { return this._color; }
+    /** Updates the stroke colour and redraws (no layout change). */
+    set color(value) {
+        this._color = value;
+        if (this.isInitialized)
+            this.redraw();
+    }
+    get lineWidth() { return this._lineWidth; }
+    /** Updates the line width; rescales because edge margins depend on it. */
+    set lineWidth(value) {
+        this._lineWidth = value;
+        if (this.isInitialized)
+            this.scale();
+    }
+    get columns() { return this.columnsRaw; }
+    /** Updates the grid columns / gap pattern and redraws. */
+    set columns(value) {
+        this.applyColumnsInput(value);
+        if (this.isInitialized)
+            this.scale();
     }
     /**
      * Resizes the canvas to match the container's current pixel dimensions
      * (taking devicePixelRatio into account) and triggers a redraw.
      *
-     * Called on construction, on window resize, and on every `columns` update.
      * Aborts silently when the container has zero dimensions — this happens
      * when a previously visible container becomes hidden.
      */
@@ -185,11 +155,12 @@ class CanvasGridLines {
         this.ratio = window.devicePixelRatio || 1;
         // `lineWidth` is interpreted as CSS pixels (`layoutpixel`) or as physical
         // canvas pixels (`devicepixel`); the canvas always works in physical pixels.
-        this.lineWidthCanvas = this.units === 'layoutpixel' ? this.lineWidth / this.ratio : this.lineWidth;
+        this.lineWidthCanvas = this.units === 'layoutpixel' ? this._lineWidth / this.ratio : this._lineWidth;
         // Edge lines would otherwise be clipped in half — extend the canvas by
         // one line width along axes that carry an edge line.
-        let marginX = (['squared', 'columns'].includes(this.gridType) || this.extend === true) ? this.lineWidthCanvas : 0;
-        let marginY = ['squared', 'baseline', 'rows'].includes(this.gridType) ? this.lineWidthCanvas : 0;
+        const config = gridTypeConfig_1.GRID_TYPE_CONFIG[this._gridType];
+        const marginX = (config.hasVerticalEdgeLine || this.extend) ? this.lineWidthCanvas : 0;
+        const marginY = config.hasHorizontalEdgeLine ? this.lineWidthCanvas : 0;
         this.gridHeight = this.container.offsetHeight * this.ratio;
         this.gridWidth = this.container.offsetWidth * this.ratio;
         this.canvasHeight = this.gridHeight + marginY;
@@ -202,23 +173,13 @@ class CanvasGridLines {
         // CSS size (layout pixels) — the browser scales the device-pixel canvas back down.
         this.canvas.style.width = this.canvasWidth / this.ratio + 'px';
         this.canvas.style.height = this.canvasHeight / this.ratio + 'px';
+        this.redraw();
+    }
+    /** Clears the canvas and re-runs the draw cycle. Cheaper than `scale()`. */
+    redraw() {
         this.context.setTransform(1, 0, 0, 1, 0, 0);
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.draw();
-    }
-    /**
-     * Yields line positions (in grid units) following an alternating gap pattern.
-     * Starts at 0, then advances by `gaps[0]`, `gaps[1]`, `gaps[0]`, `gaps[1]`, …
-     * until `max` is exceeded. Example: `gaps=[2,3]` produces 0, 2, 5, 7, 10, …
-     */
-    *gapPattern(max, gaps) {
-        let pos = 0;
-        let i = 0;
-        while (pos <= max) {
-            yield pos;
-            pos += gaps[i % 2];
-            i++;
-        }
     }
     /** Draws a horizontal line at `y`, spanning the full canvas width by default. */
     horizontalLine(y, length = this.canvasWidth) {
@@ -244,18 +205,15 @@ class CanvasGridLines {
         // Vertical lines stop at the last full grid row so the bottom edge stays clean.
         const lineLength = (Math.floor(this.gridHeight / gridSize) * gridSize) + offset;
         this.verticalLine(offset, lineLength);
-        let previousPosition = 0;
-        for (let x = 1; x <= this.columnsTotal; x += 1) {
-            const linePosition = ((this.gridWidth - previousPosition) / (this.columnsTotal - x + 1)) + previousPosition;
-            this.verticalLine(Math.floor(linePosition + offset), lineLength);
-            previousPosition = linePosition;
+        for (let col = 1; col <= this.columnsTotal; col++) {
+            this.verticalLine(Math.floor(col * gridSize + offset), lineLength);
         }
     }
     /** columns: vertical lines placed according to the alternating `vGaps` pattern. */
     drawColumns(gridSize, offset) {
         if (!this.vGaps)
             return;
-        for (const col of this.gapPattern(this.columnsTotal, this.vGaps)) {
+        for (const col of (0, gapPattern_1.gapPattern)(this.columnsTotal, this.vGaps)) {
             this.verticalLine(Math.floor(col * gridSize + offset));
         }
     }
@@ -268,10 +226,10 @@ class CanvasGridLines {
             return;
         const verticalRange = Math.floor(this.gridHeight / gridSize);
         const lineLength = verticalRange * gridSize + offset;
-        for (const row of this.gapPattern(verticalRange, this.hGaps)) {
+        for (const row of (0, gapPattern_1.gapPattern)(verticalRange, this.hGaps)) {
             this.horizontalLine(Math.floor(row * gridSize + offset));
         }
-        for (const col of this.gapPattern(this.columnsTotal, this.vGaps)) {
+        for (const col of (0, gapPattern_1.gapPattern)(this.columnsTotal, this.vGaps)) {
             this.verticalLine(Math.floor(col * gridSize + offset), lineLength);
         }
     }
@@ -283,7 +241,7 @@ class CanvasGridLines {
         this.context.beginPath();
         const gridSize = this.gridWidth / this.columnsTotal;
         const offset = this.lineWidthCanvas / 2;
-        switch (this.gridType) {
+        switch (this._gridType) {
             case 'baseline':
                 this.drawBaseline(gridSize, offset);
                 break;
@@ -296,8 +254,13 @@ class CanvasGridLines {
             case 'rows':
                 this.drawRows(gridSize, offset);
                 break;
+            default: {
+                // Exhaustiveness check — fails the build if a new GridType is added without a handler.
+                const _exhaustive = this._gridType;
+                throw new Error(`Unhandled gridType: ${String(_exhaustive)}`);
+            }
         }
-        this.context.strokeStyle = this.color;
+        this.context.strokeStyle = this._color;
         this.context.lineWidth = this.lineWidthCanvas;
         this.context.stroke();
     }
@@ -312,18 +275,18 @@ exports.CanvasGridLines = CanvasGridLines;
  */
 exports.canvasGridLines = {
     grids: [],
-    elementsArray: [],
     /**
      * Creates a `CanvasGridLines` for each element matched by `targets`
      * (CSS selector, single HTMLElement or NodeList) and stores them in `grids`.
      * Per-element configuration via `data-grid-*` attributes wins unless the
-     * caller passes an explicit option.
+     * caller passes an explicit option. Always returns an array (possibly empty).
      */
     initGrid(options) {
         const { targets, ...gridOptions } = options;
         if (!targets) {
             throw new Error('No selector for elements given');
         }
+        const elements = [];
         if (typeof targets === 'string') {
             let elementsNodeList;
             try {
@@ -332,22 +295,17 @@ exports.canvasGridLines = {
             catch (error) {
                 throw new Error(`Invalid selector: ${targets}`);
             }
-            this.elementsArray = Array.from(elementsNodeList);
+            elements.push(...Array.from(elementsNodeList));
+        }
+        else if (targets instanceof NodeList) {
+            elements.push(...Array.from(targets));
         }
         else {
-            if (targets instanceof NodeList) {
-                this.elementsArray.push(...Array.from(targets));
-            }
-            else {
-                this.elementsArray.push(targets);
-            }
+            elements.push(targets);
         }
-        if (this.elementsArray.length) {
-            const newGrids = this.elementsArray.map(element => new CanvasGridLines(element, gridOptions));
-            this.grids.push(...newGrids);
-            this.elementsArray = [];
-            return newGrids;
-        }
+        const newGrids = elements.map(element => new CanvasGridLines(element, gridOptions));
+        this.grids.push(...newGrids);
+        return newGrids;
     },
     /**
      * Re-applies the given `columns` value to every tracked grid. The value

@@ -1,0 +1,6 @@
+/**
+ * Yields line positions (in grid units) following an alternating gap pattern.
+ * Starts at 0, then advances by `gaps[0]`, `gaps[1]`, `gaps[0]`, `gaps[1]`, …
+ * until `max` is exceeded. Example: `gaps=[2,3]` produces 0, 2, 5, 7, 10, …
+ */
+export declare function gapPattern(max: number, gaps: [number, number]): Generator<number>;

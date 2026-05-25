@@ -146,6 +146,31 @@ Lines are always drawn onto the center of the grid calculated with zero line wid
 ### Color (optional, default: black)
 A [CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) setting the lines’ color.
 
+### Init marker
+Once a grid has been created on a container, the container receives the attribute `data-grid-initialised="true"`. Use it as a CSS hook (e.g. to fade the container in only after the grid is drawn).
+
+### Live updates
+After construction, `columns`, `gridType`, `color` and `lineWidth` can be reassigned directly on a `CanvasGridLines` instance — the grid re-renders automatically. Switching `gridType` re-derives the gap pattern from the current `columns`; if the value count no longer matches the new type, set a compatible `columns` first.
+
+```javascript
+const grid = canvasGridLines.getGrid(myElement);
+grid.color = '#f00';
+grid.lineWidth = 2;
+grid.columns = '20,2,3';
+grid.gridType = 'columns';
+```
+
+
+## Development
+
+### Tests
+Pure helpers (`parseColumns`, `validateColumns`, `gapPattern`, `GRID_TYPE_CONFIG`) are covered by Vitest.
+
+```
+npm test        # single run
+npm run test:watch
+```
+
 
 ## License
 

@@ -1,6 +1,6 @@
 {
     "name": "canvas-grid-lines",
-    "version": "8.1.0",
+    "version": "9.0.0",
     "description": "Draws grid lines as HTML canvas element (baseline, squared and more) ",
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
@@ -25,9 +25,11 @@
         "build:ts:umd": "rollup -c",
         "build:scss": "sass src/styles/main.scss dist/canvas-grid-lines.css",
         "build": "npm run clean && concurrently \"npm:build:ts:*\" \"npm:build:scss\"",
-        "postbuild": "npx concurrently \"npx copyfiles -f dist/esm/index.js docs\" \"npx copyfiles -f dist/canvas-grid-lines.css docs\"",
+        "postbuild": "npx concurrently \"npx copyfiles -f dist/umd/canvas-grid-lines.js docs\" \"npx copyfiles -f dist/canvas-grid-lines.css docs\"",
         "prepublishOnly": "npm run build",
-        "start:dev": "npx serve docs"
+        "start:dev": "npx serve docs",
+        "test": "vitest run",
+        "test:watch": "vitest"
     },
     "repository": {
         "type": "git",
@@ -56,6 +58,7 @@
         "copyfiles": "^2.4.1",
         "rollup": "^4.52.3",
         "sass": "^1.93.2",
-        "typescript": "^5.0.0"
+        "typescript": "^5.0.0",
+        "vitest": "^2.1.0"
     }
 }
