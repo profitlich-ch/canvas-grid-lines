@@ -273,6 +273,10 @@
             // SSR guard.
             if (typeof window === 'undefined')
                 return;
+            // Reset our inline min-height so we measure the container's natural height
+            // (with any user-CSS min-height still applied), then flush layout synchronously.
+            this.container.style.minHeight = '';
+            void this.container.offsetHeight;
             if (this.container.offsetHeight === 0 || this.container.offsetWidth === 0) {
                 return;
             }
@@ -292,6 +296,18 @@
                 // Round up to the next full grid row so a horizontal line closes the bottom edge.
                 const gridSize = this.gridWidth / this.columnsTotal;
                 this.gridHeight = Math.ceil(rawHeight / gridSize) * gridSize;
+                // Grow the container itself so its background/border wraps the extension.
+                // `min-height` refers to the content area under `content-box` (default),
+                // so we subtract padding+border for that case; with `border-box` it refers
+                // to the whole box and we set the target directly.
+                const cs = window.getComputedStyle(this.container);
+                let targetMinHeight = this.gridHeight / this.ratio;
+                if (cs.boxSizing !== 'border-box') {
+                    const paddingY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+                    const borderY = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+                    targetMinHeight -= paddingY + borderY;
+                }
+                this.container.style.minHeight = targetMinHeight + 'px';
             }
             else {
                 this.gridHeight = rawHeight;
