@@ -35,17 +35,10 @@ describe('GRID_TYPE_CONFIG', () => {
         expect(GRID_TYPE_CONFIG.rows.mapGaps([30, 4, 5, 5, 6])).toEqual({ vGaps: [4, 5], hGaps: [5, 6] });
     });
 
-    it('edge-line flags match the historical marginX/marginY behaviour', () => {
-        // marginY (horizontal edge): squared, baseline, rows
+    it('hasHorizontalEdgeLine matches marginY behaviour: only types with a top/bottom line', () => {
         expect(GRID_TYPE_CONFIG.baseline.hasHorizontalEdgeLine).toBe(true);
         expect(GRID_TYPE_CONFIG.squared.hasHorizontalEdgeLine).toBe(true);
         expect(GRID_TYPE_CONFIG.rows.hasHorizontalEdgeLine).toBe(true);
         expect(GRID_TYPE_CONFIG.columns.hasHorizontalEdgeLine).toBe(false);
-
-        // marginX (vertical edge, before `extend`): squared, columns
-        expect(GRID_TYPE_CONFIG.squared.hasVerticalEdgeLine).toBe(true);
-        expect(GRID_TYPE_CONFIG.columns.hasVerticalEdgeLine).toBe(true);
-        expect(GRID_TYPE_CONFIG.baseline.hasVerticalEdgeLine).toBe(false);
-        expect(GRID_TYPE_CONFIG.rows.hasVerticalEdgeLine).toBe(false);
     });
 });

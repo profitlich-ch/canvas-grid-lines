@@ -10,8 +10,6 @@ export interface GridTypeConfig {
     columnsShape: string;
     /** Whether this grid type draws a horizontal line on the canvas edge (top/bottom). Drives `marginY`. */
     hasHorizontalEdgeLine: boolean;
-    /** Whether this grid type draws a vertical line on the canvas edge (left/right). Drives `marginX`. */
-    hasVerticalEdgeLine: boolean;
     /** Maps a validated `columns` array to the per-axis gap patterns. */
     mapGaps(values: number[]): AppliedGaps;
 }

@@ -10,28 +10,24 @@ exports.GRID_TYPE_CONFIG = {
         columnsLength: 1,
         columnsShape: 'total',
         hasHorizontalEdgeLine: true,
-        hasVerticalEdgeLine: false,
         mapGaps: () => ({ hGaps: null, vGaps: null }),
     },
     squared: {
         columnsLength: 1,
         columnsShape: 'total',
         hasHorizontalEdgeLine: true,
-        hasVerticalEdgeLine: true,
         mapGaps: () => ({ hGaps: null, vGaps: null }),
     },
     columns: {
         columnsLength: 3,
         columnsShape: 'total, gap1, gap2',
         hasHorizontalEdgeLine: false,
-        hasVerticalEdgeLine: true,
         mapGaps: v => ({ hGaps: null, vGaps: [v[1], v[2]] }),
     },
     rows: {
         columnsLength: 5,
         columnsShape: 'total, v_gap1, v_gap2, h_gap1, h_gap2',
         hasHorizontalEdgeLine: true,
-        hasVerticalEdgeLine: false,
         mapGaps: v => ({ vGaps: [v[1], v[2]], hGaps: [v[3], v[4]] }),
     },
 };

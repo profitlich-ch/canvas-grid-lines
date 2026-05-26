@@ -3,16 +3,18 @@ import {
     type GridOptions,
     type GridType,
     type InitGridOptions,
+    type Termination,
     type Units,
     isGridType,
+    isTermination,
     isUnits,
 } from './types';
 import {
     DEFAULT_COLOR,
     DEFAULT_COLUMNS,
-    DEFAULT_EXTEND,
     DEFAULT_GRID_TYPE,
     DEFAULT_LINE_WIDTH,
+    DEFAULT_TERMINATION,
     DEFAULT_UNITS,
     INIT_MARKER_ATTR,
 } from './constants';
@@ -20,7 +22,7 @@ import { GRID_TYPE_CONFIG } from './gridTypeConfig';
 import { applyColumns } from './parseColumns';
 import { gapPattern } from './gapPattern';
 
-export type { GridOptions, GridType, InitGridOptions, Units, ColumnsInput };
+export type { GridOptions, GridType, InitGridOptions, Termination, Units, ColumnsInput };
 
 /**
  * Draws a crisp grid onto an HTML canvas appended to `container`.
@@ -40,7 +42,7 @@ export class CanvasGridLines {
     public columnsRaw!: number[];
 
     public readonly units: Units;
-    public readonly extend: boolean;
+    public readonly termination: Termination;
 
     private _gridType!: GridType;
     private _color: string;
@@ -89,7 +91,13 @@ export class CanvasGridLines {
         const lineWidthAttr = container.getAttribute('data-grid-line');
         this._lineWidth = options.lineWidth ?? (lineWidthAttr !== null ? parseInt(lineWidthAttr, 10) : DEFAULT_LINE_WIDTH);
 
-        this.extend = options.extend ?? DEFAULT_EXTEND;
+        const terminationRaw = options.termination
+            ?? container.getAttribute('data-grid-termination')
+            ?? DEFAULT_TERMINATION;
+        if (!isTermination(terminationRaw)) {
+            throw new Error(`Invalid termination "${terminationRaw}"`);
+        }
+        this.termination = terminationRaw;
 
         const rawColumns: ColumnsInput = options.columns
             ?? container.getAttribute('data-grid-columns')
@@ -210,15 +218,28 @@ export class CanvasGridLines {
         this.lineWidthCanvas = this.units === 'layoutpixel' ? this._lineWidth / this.ratio : this._lineWidth;
 
         // Edge lines would otherwise be clipped in half — extend the canvas by
-        // one line width along axes that carry an edge line.
+        // one line width along axes that carry an edge line. Horizontal-axis
+        // edge lines are always added (vertical lines always reach the side edges).
         const config = GRID_TYPE_CONFIG[this._gridType];
-        const marginX: number = (config.hasVerticalEdgeLine || this.extend) ? this.lineWidthCanvas : 0;
+        const marginX: number = this.lineWidthCanvas;
         const marginY: number = config.hasHorizontalEdgeLine ? this.lineWidthCanvas : 0;
 
-        this.gridHeight = this.container.offsetHeight * this.ratio;
         this.gridWidth = this.container.offsetWidth * this.ratio;
-        this.canvasHeight = this.gridHeight + marginY;
-        this.canvasWidth = this.gridWidth + marginX;
+        const rawHeight = this.container.offsetHeight * this.ratio;
+
+        if (this.termination === 'extend' && this._gridType !== 'columns') {
+            // Round up to the next full grid row so a horizontal line closes the bottom edge.
+            const gridSize = this.gridWidth / this.columnsTotal;
+            this.gridHeight = Math.ceil(rawHeight / gridSize) * gridSize;
+        } else {
+            this.gridHeight = rawHeight;
+        }
+
+        // Round up to whole device pixels: `canvas.height/width` are unsigned
+        // ints (browser truncates float assignments), and truncation can clip
+        // the bottom/right edge line by half a pixel under float drift.
+        this.canvasHeight = Math.ceil(this.gridHeight + marginY);
+        this.canvasWidth = Math.ceil(this.gridWidth + marginX);
 
         // Physical canvas size (device pixels).
         this.canvas.height = this.canvasHeight;
@@ -255,11 +276,12 @@ export class CanvasGridLines {
 
     /** baseline: one horizontal line per grid unit, full width. */
     private drawBaseline(gridSize: number, offset: number): void {
-        this.horizontalLine(offset);
-
-        for (let y = gridSize; y <= this.gridHeight; y += gridSize) {
-            const linePosition = y + offset;
-            this.horizontalLine(Math.floor(linePosition + offset));
+        // Integer counter + epsilon: avoids float-accumulation drift in `y += gridSize`
+        // and the float wobble that makes `gridHeight / gridSize` land at e.g. 17.999…
+        // instead of 18 after `Math.ceil(rawHeight/gridSize) * gridSize` at termination='extend'.
+        const lastN = Math.floor(this.gridHeight / gridSize + 1e-9);
+        for (let n = 0; n <= lastN; n++) {
+            this.horizontalLine(Math.floor(n * gridSize + offset));
         }
     }
 
@@ -267,8 +289,11 @@ export class CanvasGridLines {
     private drawSquared(gridSize: number, offset: number): void {
         this.drawBaseline(gridSize, offset);
 
-        // Vertical lines stop at the last full grid row so the bottom edge stays clean.
-        const lineLength = (Math.floor(this.gridHeight / gridSize) * gridSize) + offset;
+        // `fill`: vertical lines run to the canvas edge; otherwise they stop at the
+        // last horizontal line (last full grid row).
+        const lineLength = this.termination === 'fill'
+            ? this.canvasHeight
+            : Math.floor(this.gridHeight / gridSize) * gridSize + offset;
 
         this.verticalLine(offset, lineLength);
         for (let col = 1; col <= this.columnsTotal; col++) {
@@ -291,11 +316,18 @@ export class CanvasGridLines {
     private drawRows(gridSize: number, offset: number): void {
         if (!this.hGaps || !this.vGaps) return;
         const verticalRange = Math.floor(this.gridHeight / gridSize);
-        const lineLength = verticalRange * gridSize + offset;
 
+        // Draw horizontals first, remember where the last one actually lands —
+        // the gap pattern usually stops short of `verticalRange`.
+        let lastRow = 0;
         for (const row of gapPattern(verticalRange, this.hGaps)) {
+            lastRow = row;
             this.horizontalLine(Math.floor(row * gridSize + offset));
         }
+
+        const lineLength = this.termination === 'fill'
+            ? this.canvasHeight
+            : lastRow * gridSize + offset;
 
         for (const col of gapPattern(this.columnsTotal, this.vGaps)) {
             this.verticalLine(Math.floor(col * gridSize + offset), lineLength);

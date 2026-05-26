@@ -1,5 +1,5 @@
-import { type ColumnsInput, type GridOptions, type GridType, type InitGridOptions, type Units } from './types';
-export type { GridOptions, GridType, InitGridOptions, Units, ColumnsInput };
+import { type ColumnsInput, type GridOptions, type GridType, type InitGridOptions, type Termination, type Units } from './types';
+export type { GridOptions, GridType, InitGridOptions, Termination, Units, ColumnsInput };
 /**
  * Draws a crisp grid onto an HTML canvas appended to `container`.
  *
@@ -16,7 +16,7 @@ export declare class CanvasGridLines {
     /** Raw parsed `columns` array as supplied by the caller. */
     columnsRaw: number[];
     readonly units: Units;
-    readonly extend: boolean;
+    readonly termination: Termination;
     private _gridType;
     private _color;
     private _lineWidth;

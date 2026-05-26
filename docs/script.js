@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
         targets: '[data-grid-type]',
         lineWidth: 4,
         units: 'devicepixel',
-        extend: true,
     });
 
     // Event-Listener for the button for showing hidden container

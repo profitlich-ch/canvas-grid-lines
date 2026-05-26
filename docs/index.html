@@ -11,6 +11,9 @@
             padding: 2rem;
             color: #333;
         }
+        h2 {
+            margin-top: 5rem;
+        }
         .grid-container {
             padding: 2rem;
             font-size: 2rem;
@@ -54,6 +57,7 @@ data-grid-color="rgba(0, 255, 0, 0.5)" &gt;
     <div
         class="grid-container"
         data-grid-type="squared"
+        data-grid-line="10"
         data-grid-columns="47"
         data-grid-color="rgba(0, 255, 0, 0.5)"
     >
@@ -92,6 +96,43 @@ data-grid-color="rgba(255, 0, 255, 0.5)" &gt;
         She sells sea shells at the sea shore. She sells sea shells at the sea shore. She sells sea shells at the sea shore. She sells sea shells at the sea shore. She sells sea shells at the sea shore. 
     </div>
 
+    <h2>Squared, termination = fill</h2>
+    <pre>
+&lt;div
+data-grid-type="squared"
+data-grid-columns="47"
+data-grid-termination="fill"
+data-grid-color="rgba(0, 200, 200, 0.5)" &gt;
+    </pre>
+    <div
+        class="grid-container"
+        data-grid-type="squared"
+        data-grid-columns="47"
+        data-grid-termination="fill"
+        data-grid-color="rgba(0, 200, 200, 0.5)"
+    >
+        Vertical lines fill the bottom stub all the way to the canvas edge.
+    </div>
+
+    <h2>Squared, termination = extend</h2>
+    <pre>
+&lt;div
+data-grid-type="squared"
+data-grid-columns="47"
+data-grid-termination="extend"
+data-grid-color="rgba(255, 128, 0, 0.5)" &gt;
+    </pre>
+    <div
+        class="grid-container"
+        data-grid-type="squared"
+        data-grid-columns="47"
+        data-grid-termination="extend"
+        data-grid-color="rgba(255, 128, 0, 0.5)"
+    >
+        Canvas extends down so the bottom edge is closed by a horizontal line.
+    </div>
+
+    <h2>Hidden container</h2>
     <button id="show-hidden-btn">Show hidden container</button>
     <pre>
 &lt;div

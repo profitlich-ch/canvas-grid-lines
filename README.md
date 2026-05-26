@@ -140,8 +140,12 @@ Line width as integer or float.
 ### Units (optional, default: layoutPixel)
 The units parameter tells the script how to interpret the line width: either layout size (`layoutpixel` as in CSS) or physical pixels (`devicepixel`).
 
-### Extend (optional, default: false)
-Lines are always drawn onto the center of the grid calculated with zero line width. The sides of thicker lines thus protrude the html element. This parameter controls whether the ends of lines will also be extended. 
+### Termination (optional, default: `shorten`)
+Controls how the grid terminates at the bottom edge. Settable via `data-grid-termination` or `{ termination }`.
+
+- `shorten` (default) — canvas height = parent height + 1 line width. Vertical lines stop at the last horizontal line (the bottom stub stays empty).
+- `fill` — same canvas height as `shorten`, but vertical lines run all the way down to the canvas edge.
+- `extend` — canvas is extended downward to the next multiple of `gridWidth / columns` so a horizontal bottom line can close the grid. No effect for `gridType: 'columns'` (no horizontal lines).
 
 ### Color (optional, default: black)
 A [CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) setting the lines’ color.
