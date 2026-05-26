@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gapPattern } from './gapPattern';
+import { gapPattern, nextGapTick } from './gapPattern';
 
 function collect(max: number, gaps: [number, number]): number[] {
     return Array.from(gapPattern(max, gaps));
@@ -25,5 +25,32 @@ describe('gapPattern', () => {
 
     it('yields just 0 when max is 0', () => {
         expect(collect(0, [2, 3])).toEqual([0]);
+    });
+});
+
+describe('nextGapTick', () => {
+    it('returns 0 for threshold 0', () => {
+        expect(nextGapTick(0, [5, 1])).toBe(0);
+    });
+
+    it('returns the first non-zero tick when threshold is just above 0', () => {
+        expect(nextGapTick(0.0001, [5, 1])).toBe(5);
+        expect(nextGapTick(1, [5, 1])).toBe(5);
+    });
+
+    it('skips gap positions that the pattern never lands on', () => {
+        // pattern [6,1] yields 0, 6, 7, 13, 14, 20, 21, … — 18 is not a tick
+        expect(nextGapTick(18, [6, 1])).toBe(20);
+        expect(nextGapTick(15, [6, 1])).toBe(20);
+    });
+
+    it('returns the threshold when it already is a tick', () => {
+        expect(nextGapTick(14, [6, 1])).toBe(14);
+        expect(nextGapTick(13, [6, 1])).toBe(13);
+    });
+
+    it('handles symmetric gaps', () => {
+        expect(nextGapTick(5, [2, 2])).toBe(6);
+        expect(nextGapTick(6, [2, 2])).toBe(6);
     });
 });

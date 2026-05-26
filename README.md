@@ -119,6 +119,36 @@ canvasGridLines.setColumns(29);
 
 
 ## Configuration
+
+### How options are resolved
+Every option can be set in **two places** — the constructor's `options` object (or `initGrid`) **or** an HTML `data-grid-*` attribute on the container. The resolution order is:
+
+```
+options.X ?? container.getAttribute('data-grid-X') ?? default
+```
+
+**JS option > HTML attribute > default.** A value set in `initGrid({...})` is applied to **every** matched container and overrides per-element HTML attributes — be careful with globals.
+
+Rule of thumb:
+
+| Use… | When |
+|---|---|
+| `data-grid-*` HTML attribute | Value varies per container (`gridType`, `columns`, `color`, `termination`) |
+| JS option in `initGrid` | Value is global for all matched containers (`lineWidth`, `units`) |
+
+Example (matches the demo):
+```javascript
+canvasGridLines.initGrid({
+    targets: '[data-grid-type]',
+    lineWidth: 4,
+    units: 'devicepixel',
+});
+```
+```html
+<div data-grid-type="baseline" data-grid-columns="47" data-grid-color="rgba(0,0,255,.5)"></div>
+<div data-grid-type="squared" data-grid-columns="40"></div>
+```
+
 ### HTML elements to be used
 Any `querySelectorAll`-compatible selector may be given. In the example code above the data attribute needed for the grid type is used.
 

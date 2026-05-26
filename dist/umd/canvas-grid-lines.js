@@ -123,6 +123,22 @@
             i++;
         }
     }
+    /**
+     * Returns the smallest pattern tickmark `>= threshold` produced by an
+     * alternating gap sequence starting at 0. Used to round up grid heights
+     * to the next horizontal-line position for `termination: 'extend'` on
+     * grids that draw horizontal lines only at gap-pattern positions.
+     * Example: `nextGapTick(18, [6, 1])` returns 20 (sequence is 0,6,7,13,14,20,…).
+     */
+    function nextGapTick(threshold, gaps) {
+        let pos = 0;
+        let i = 0;
+        while (pos < threshold) {
+            pos += gaps[i % 2];
+            i++;
+        }
+        return pos;
+    }
 
     /**
      * Draws a crisp grid onto an HTML canvas appended to `container`.
@@ -293,9 +309,15 @@
             this.gridWidth = this.container.offsetWidth * this.ratio;
             const rawHeight = this.container.offsetHeight * this.ratio;
             if (this.termination === 'extend' && this._gridType !== 'columns') {
-                // Round up to the next full grid row so a horizontal line closes the bottom edge.
+                // Round up so a horizontal line closes the bottom edge. For `rows`
+                // the horizontals only sit on hGaps-pattern positions, so round up
+                // to the next pattern tickmark; otherwise to the next integer row.
                 const gridSize = this.gridWidth / this.columnsTotal;
-                this.gridHeight = Math.ceil(rawHeight / gridSize) * gridSize;
+                const rawRows = rawHeight / gridSize;
+                const targetRows = (this._gridType === 'rows' && this.hGaps)
+                    ? nextGapTick(rawRows - 1e-9, this.hGaps)
+                    : Math.ceil(rawRows - 1e-9);
+                this.gridHeight = targetRows * gridSize;
                 // Grow the container itself so its background/border wraps the extension.
                 // `min-height` refers to the content area under `content-box` (default),
                 // so we subtract padding+border for that case; with `border-box` it refers

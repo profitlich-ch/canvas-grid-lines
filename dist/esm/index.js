@@ -2,7 +2,7 @@ import { isGridType, isTermination, isUnits, } from './types';
 import { DEFAULT_COLOR, DEFAULT_COLUMNS, DEFAULT_GRID_TYPE, DEFAULT_LINE_WIDTH, DEFAULT_TERMINATION, DEFAULT_UNITS, INIT_MARKER_ATTR, } from './constants';
 import { GRID_TYPE_CONFIG } from './gridTypeConfig';
 import { applyColumns } from './parseColumns';
-import { gapPattern } from './gapPattern';
+import { gapPattern, nextGapTick } from './gapPattern';
 /**
  * Draws a crisp grid onto an HTML canvas appended to `container`.
  *
@@ -172,9 +172,15 @@ export class CanvasGridLines {
         this.gridWidth = this.container.offsetWidth * this.ratio;
         const rawHeight = this.container.offsetHeight * this.ratio;
         if (this.termination === 'extend' && this._gridType !== 'columns') {
-            // Round up to the next full grid row so a horizontal line closes the bottom edge.
+            // Round up so a horizontal line closes the bottom edge. For `rows`
+            // the horizontals only sit on hGaps-pattern positions, so round up
+            // to the next pattern tickmark; otherwise to the next integer row.
             const gridSize = this.gridWidth / this.columnsTotal;
-            this.gridHeight = Math.ceil(rawHeight / gridSize) * gridSize;
+            const rawRows = rawHeight / gridSize;
+            const targetRows = (this._gridType === 'rows' && this.hGaps)
+                ? nextGapTick(rawRows - 1e-9, this.hGaps)
+                : Math.ceil(rawRows - 1e-9);
+            this.gridHeight = targetRows * gridSize;
             // Grow the container itself so its background/border wraps the extension.
             // `min-height` refers to the content area under `content-box` (default),
             // so we subtract padding+border for that case; with `border-box` it refers
