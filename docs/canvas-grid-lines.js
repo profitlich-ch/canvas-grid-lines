@@ -296,11 +296,8 @@
             else {
                 this.gridHeight = rawHeight;
             }
-            // Round up to whole device pixels: `canvas.height/width` are unsigned
-            // ints (browser truncates float assignments), and truncation can clip
-            // the bottom/right edge line by half a pixel under float drift.
-            this.canvasHeight = Math.ceil(this.gridHeight + marginY);
-            this.canvasWidth = Math.ceil(this.gridWidth + marginX);
+            this.canvasHeight = this.gridHeight + marginY;
+            this.canvasWidth = this.gridWidth + marginX;
             // Physical canvas size (device pixels).
             this.canvas.height = this.canvasHeight;
             this.canvas.width = this.canvasWidth;
@@ -329,18 +326,24 @@
         }
         /** baseline: one horizontal line per grid unit, full width. */
         drawBaseline(gridSize, offset) {
-            for (let y = 0; y <= this.gridHeight; y += gridSize) {
-                this.horizontalLine(Math.floor(y + offset));
+            // Integer counter + epsilon: avoids float-accumulation drift in `y += gridSize`
+            // and the float wobble that makes `gridHeight / gridSize` land at e.g. 17.999…
+            // instead of 18 after `Math.ceil(rawHeight/gridSize) * gridSize` at termination='extend'.
+            const lastN = Math.floor(this.gridHeight / gridSize + 1e-9);
+            for (let n = 0; n <= lastN; n++) {
+                this.horizontalLine(Math.floor(n * gridSize + offset));
             }
         }
         /** squared: baseline pattern plus one vertical line per grid unit. */
         drawSquared(gridSize, offset) {
             this.drawBaseline(gridSize, offset);
             // `fill`: vertical lines run to the canvas edge; otherwise they stop at the
-            // last horizontal line (last full grid row).
+            // last horizontal line (last full grid row). Epsilon matches `drawBaseline`
+            // so float drift doesn't drop the bottom row at termination='extend'.
+            const lastN = Math.floor(this.gridHeight / gridSize + 1e-9);
             const lineLength = this.termination === 'fill'
                 ? this.canvasHeight
-                : Math.floor(this.gridHeight / gridSize) * gridSize + offset;
+                : lastN * gridSize + offset;
             this.verticalLine(offset, lineLength);
             for (let col = 1; col <= this.columnsTotal; col++) {
                 this.verticalLine(Math.floor(col * gridSize + offset), lineLength);
@@ -361,7 +364,7 @@
         drawRows(gridSize, offset) {
             if (!this.hGaps || !this.vGaps)
                 return;
-            const verticalRange = Math.floor(this.gridHeight / gridSize);
+            const verticalRange = Math.floor(this.gridHeight / gridSize + 1e-9);
             // Draw horizontals first, remember where the last one actually lands —
             // the gap pattern usually stops short of `verticalRange`.
             let lastRow = 0;
