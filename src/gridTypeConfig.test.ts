@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GRID_TYPE_CONFIG } from './gridTypeConfig';
 import type { GridType } from './types';
 
-const ALL_GRID_TYPES: GridType[] = ['baseline', 'squared', 'columns', 'rows'];
+const ALL_GRID_TYPES: GridType[] = ['baseline', 'squared', 'columns', 'ribbons', 'rows'];
 
 describe('GRID_TYPE_CONFIG', () => {
     it('defines a config entry for every grid type', () => {
@@ -31,8 +31,20 @@ describe('GRID_TYPE_CONFIG', () => {
         expect(GRID_TYPE_CONFIG.columns.mapGaps([20, 2, 3])).toEqual({ hGaps: null, vGaps: [2, 3] });
     });
 
+    it('ribbons maps to the same gaps as columns', () => {
+        expect(GRID_TYPE_CONFIG.ribbons.mapGaps([20, 2, 3])).toEqual({ hGaps: null, vGaps: [2, 3] });
+    });
+
     it('rows maps vertical gaps before horizontal gaps', () => {
         expect(GRID_TYPE_CONFIG.rows.mapGaps([30, 4, 5, 5, 6])).toEqual({ vGaps: [4, 5], hGaps: [5, 6] });
+    });
+
+    it('isFilled marks the types painted with fill() instead of stroke()', () => {
+        expect(GRID_TYPE_CONFIG.ribbons.isFilled).toBe(true);
+        expect(GRID_TYPE_CONFIG.baseline.isFilled).toBe(false);
+        expect(GRID_TYPE_CONFIG.squared.isFilled).toBe(false);
+        expect(GRID_TYPE_CONFIG.columns.isFilled).toBe(false);
+        expect(GRID_TYPE_CONFIG.rows.isFilled).toBe(false);
     });
 
     it('hasHorizontalEdgeLine matches marginY behaviour: only types with a top/bottom line', () => {
@@ -40,5 +52,6 @@ describe('GRID_TYPE_CONFIG', () => {
         expect(GRID_TYPE_CONFIG.squared.hasHorizontalEdgeLine).toBe(true);
         expect(GRID_TYPE_CONFIG.rows.hasHorizontalEdgeLine).toBe(true);
         expect(GRID_TYPE_CONFIG.columns.hasHorizontalEdgeLine).toBe(false);
+        expect(GRID_TYPE_CONFIG.ribbons.hasHorizontalEdgeLine).toBe(false);
     });
 });

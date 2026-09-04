@@ -85,13 +85,24 @@ export declare class CanvasGridLines {
     /** columns: vertical lines placed according to the alternating `vGaps` pattern. */
     private drawColumns;
     /**
+     * ribbons: the spans between the `vGaps` edge pairs as filled bands over the
+     * full canvas height. Same edge sequence as `drawColumns`, closed into
+     * rectangles instead of stroked.
+     *
+     * Both edges are floored, so a band starts exactly where its neighbour's gap
+     * ended — rounding each edge independently would leave seams or overlaps.
+     */
+    private drawRibbons;
+    /**
      * rows: horizontal lines from `hGaps`, vertical lines from `vGaps`. Both
      * patterns share the same grid unit (`gridSize = gridWidth / columnsTotal`).
      */
     private drawRows;
     /**
      * Renders the grid in a single canvas path, dispatching to the grid-type
-     * specific helper. Stroke style and width are applied after the path is built.
+     * specific helper. Paint style is applied after the path is built: filled
+     * types close their subpaths with `rect()` and get one `fill()`, all others
+     * one `stroke()`. No type mixes the two, so a single path suffices.
      */
     private draw;
 }

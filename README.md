@@ -14,6 +14,7 @@ Draws grid lines as HTML canvas element (baseline, squared and more)
   - baseline (horizontal lines)
   - squared (horizontal and vertical lines)
   - columns (vertical lines showing columns with gaps)
+  - ribbons (filled column bands instead of lines)
   - rows (vertical lines for columns without gaps and horizontal lines)
 
 - **Retina/high res**: The grid is automatically adapted to the screen’s resolution and redrawn any time the window is resized.
@@ -153,19 +154,22 @@ canvasGridLines.initGrid({
 Any `querySelectorAll`-compatible selector may be given. In the example code above the data attribute needed for the grid type is used.
 
 ### Grid Type
-The grid type is read from a mandatory data attribute `data-grid-type` and may be of the following values: `baseline`, `squared`, `columns`, `rows`
+The grid type is read from a mandatory data attribute `data-grid-type` and may be of the following values: `baseline`, `squared`, `columns`, `ribbons`, `rows`
+
+`ribbons` is the filled counterpart to `columns`: same edge sequence, but the space between each pair of edges is filled instead of outlined. Use it to show the columns themselves rather than their boundaries.
 
 ### Columns
 The `columns` configuration controls both the grid resolution **and** the line placement pattern. It accepts a number, a comma-separated string (used by the `data-grid-columns` HTML attribute) or a number array — and the expected number of values depends on the grid type:
 
 - `baseline`, `squared` — **1 value**: total grid columns. Example: `data-grid-columns="40"` / `columns: 40`
 - `columns` — **3 values**: `total, gap1, gap2`. Vertical lines are placed with alternating gaps. Example: `data-grid-columns="49,4,5"` produces lines at column 0, 4, 9, 13, 18, … (line · 4 · line · 5 · line · 4 · …).
+- `ribbons` — **3 values**: `total, band, gap`. Same sequence as `columns`, read as alternating band widths and gaps. Example: `data-grid-columns="49,4,5"` fills columns 0–4, 9–13, 18–22, … A band left open by the sequence (an odd number of edges) is dropped.
 - `rows` — **5 values**: `total, v_gap1, v_gap2, h_gap1, h_gap2`. Vertical lines (column gaps) come first, horizontal lines (row gaps) second. Both share the same grid unit (`total`). Example: `data-grid-columns="30,4,5,5,6"`.
 
 If the number of values does not match the grid type, an error is thrown. All values must be positive integers.
 
 ### Line width
-Line width as integer or float.
+Line width as integer or float. Ignored by `ribbons`, which fills areas and has no outline.
 
 ### Units (optional, default: layoutPixel)
 The units parameter tells the script how to interpret the line width: either layout size (`layoutpixel` as in CSS) or physical pixels (`devicepixel`).
@@ -175,10 +179,12 @@ Controls how the grid terminates at the bottom edge. Settable via `data-grid-ter
 
 - `shorten` (default) — canvas height = parent height + 1 line width. Vertical lines stop at the last horizontal line (the bottom stub stays empty).
 - `fill` — same canvas height as `shorten`, but vertical lines run all the way down to the canvas edge.
-- `extend` — canvas is extended downward to the next multiple of `gridWidth / columns` so a horizontal bottom line can close the grid. No effect for `gridType: 'columns'` (no horizontal lines).
+- `extend` — canvas is extended downward to the next multiple of `gridWidth / columns` so a horizontal bottom line can close the grid.
+
+Termination has no effect on `columns` and `ribbons`: they draw no horizontal line, so there is nothing to close the bottom edge with, and their marks span the full canvas height in every mode.
 
 ### Color (optional, default: black)
-A [CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) setting the lines’ color.
+A [CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) setting the lines’ color — the fill color for `ribbons`.
 
 ### Init marker
 Once a grid has been created on a container, the container receives the attribute `data-grid-initialised="true"`. Use it as a CSS hook (e.g. to fade the container in only after the grid is drawn).

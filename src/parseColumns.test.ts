@@ -37,11 +37,13 @@ describe('validateColumns', () => {
         expect(() => validateColumns([12], 'baseline')).not.toThrow();
         expect(() => validateColumns([12], 'squared')).not.toThrow();
         expect(() => validateColumns([20, 2, 3], 'columns')).not.toThrow();
+        expect(() => validateColumns([20, 2, 3], 'ribbons')).not.toThrow();
         expect(() => validateColumns([20, 2, 3, 4, 5], 'rows')).not.toThrow();
     });
 
     it('throws with a helpful message on wrong length', () => {
         expect(() => validateColumns([20, 2], 'columns')).toThrow(/exactly 3.*total, gap1, gap2/);
+        expect(() => validateColumns([20, 2], 'ribbons')).toThrow(/exactly 3.*total, band, gap/);
         expect(() => validateColumns([20], 'rows')).toThrow(/exactly 5.*total, v_gap1, v_gap2, h_gap1, h_gap2/);
         expect(() => validateColumns([12, 3], 'baseline')).toThrow(/exactly 1.*total/);
     });

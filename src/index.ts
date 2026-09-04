@@ -20,7 +20,7 @@ import {
 } from './constants';
 import { GRID_TYPE_CONFIG } from './gridTypeConfig';
 import { applyColumns } from './parseColumns';
-import { gapPattern, nextGapTick } from './gapPattern';
+import { bandSpans, gapPattern, nextGapTick } from './gapPattern';
 
 export type { GridOptions, GridType, InitGridOptions, Termination, Units, ColumnsInput };
 
@@ -232,7 +232,9 @@ export class CanvasGridLines {
         this.gridWidth = this.container.offsetWidth * this.ratio;
         const rawHeight = this.container.offsetHeight * this.ratio;
 
-        if (this.termination === 'extend' && this._gridType !== 'columns') {
+        // `extend` rounds the canvas up so a horizontal line can close the bottom
+        // edge — meaningless for grid types that draw none.
+        if (this.termination === 'extend' && config.hasHorizontalEdgeLine) {
             // Round up so a horizontal line closes the bottom edge. For `rows`
             // the horizontals only sit on hGaps-pattern positions, so round up
             // to the next pattern tickmark; otherwise to the next integer row.
@@ -332,6 +334,23 @@ export class CanvasGridLines {
     }
 
     /**
+     * ribbons: the spans between the `vGaps` edge pairs as filled bands over the
+     * full canvas height. Same edge sequence as `drawColumns`, closed into
+     * rectangles instead of stroked.
+     *
+     * Both edges are floored, so a band starts exactly where its neighbour's gap
+     * ended — rounding each edge independently would leave seams or overlaps.
+     */
+    private drawRibbons(gridSize: number, offset: number): void {
+        if (!this.vGaps) return;
+        for (const [start, end] of bandSpans(this.columnsTotal, this.vGaps)) {
+            const left = Math.floor(start * gridSize + offset);
+            const right = Math.floor(end * gridSize + offset);
+            this.context.rect(left, 0, right - left, this.canvasHeight);
+        }
+    }
+
+    /**
      * rows: horizontal lines from `hGaps`, vertical lines from `vGaps`. Both
      * patterns share the same grid unit (`gridSize = gridWidth / columnsTotal`).
      */
@@ -358,7 +377,9 @@ export class CanvasGridLines {
 
     /**
      * Renders the grid in a single canvas path, dispatching to the grid-type
-     * specific helper. Stroke style and width are applied after the path is built.
+     * specific helper. Paint style is applied after the path is built: filled
+     * types close their subpaths with `rect()` and get one `fill()`, all others
+     * one `stroke()`. No type mixes the two, so a single path suffices.
      */
     private draw() {
         this.context.beginPath();
@@ -370,12 +391,19 @@ export class CanvasGridLines {
             case 'baseline': this.drawBaseline(gridSize, offset); break;
             case 'squared':  this.drawSquared(gridSize, offset); break;
             case 'columns':  this.drawColumns(gridSize, offset); break;
+            case 'ribbons':  this.drawRibbons(gridSize, offset); break;
             case 'rows':     this.drawRows(gridSize, offset); break;
             default: {
                 // Exhaustiveness check — fails the build if a new GridType is added without a handler.
                 const _exhaustive: never = this._gridType;
                 throw new Error(`Unhandled gridType: ${String(_exhaustive)}`);
             }
+        }
+
+        if (GRID_TYPE_CONFIG[this._gridType].isFilled) {
+            this.context.fillStyle = this._color;
+            this.context.fill();
+            return;
         }
 
         this.context.strokeStyle = this._color;

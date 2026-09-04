@@ -4,7 +4,7 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.canvasGridLines = factory());
 })(this, (function () { 'use strict';
 
-    const GRID_TYPES = ['baseline', 'squared', 'columns', 'rows'];
+    const GRID_TYPES = ['baseline', 'squared', 'columns', 'ribbons', 'rows'];
     const UNITS = ['layoutpixel', 'devicepixel'];
     const TERMINATIONS = ['shorten', 'fill', 'extend'];
     function isGridType(value) {
@@ -35,24 +35,37 @@
             columnsLength: 1,
             columnsShape: 'total',
             hasHorizontalEdgeLine: true,
+            isFilled: false,
             mapGaps: () => ({ hGaps: null, vGaps: null }),
         },
         squared: {
             columnsLength: 1,
             columnsShape: 'total',
             hasHorizontalEdgeLine: true,
+            isFilled: false,
             mapGaps: () => ({ hGaps: null, vGaps: null }),
         },
         columns: {
             columnsLength: 3,
             columnsShape: 'total, gap1, gap2',
             hasHorizontalEdgeLine: false,
+            isFilled: false,
+            mapGaps: v => ({ hGaps: null, vGaps: [v[1], v[2]] }),
+        },
+        // Same edge sequence as `columns` — the difference is only what is done with
+        // it: `columns` strokes the edges, `ribbons` fills the spans between them.
+        ribbons: {
+            columnsLength: 3,
+            columnsShape: 'total, band, gap',
+            hasHorizontalEdgeLine: false,
+            isFilled: true,
             mapGaps: v => ({ hGaps: null, vGaps: [v[1], v[2]] }),
         },
         rows: {
             columnsLength: 5,
             columnsShape: 'total, v_gap1, v_gap2, h_gap1, h_gap2',
             hasHorizontalEdgeLine: true,
+            isFilled: false,
             mapGaps: v => ({ vGaps: [v[1], v[2]], hGaps: [v[3], v[4]] }),
         },
     };
@@ -122,6 +135,23 @@
             pos += gaps[i % 2];
             i++;
         }
+    }
+    /**
+     * Pairs the alternating gap sequence into band spans `[start, end]` in grid
+     * units: every even-indexed edge opens a band, the next edge closes it.
+     * `gaps=[2,3]` at max 12 yields [0,2], [5,7], [10,12].
+     *
+     * A trailing edge without a partner is dropped. `gapPattern` does not guarantee
+     * an even number of edges — `gaps=[2,3]` at max 11 ends on an opening edge — and
+     * a band that is never closed has no width to fill.
+     */
+    function bandSpans(max, gaps) {
+        const edges = Array.from(gapPattern(max, gaps));
+        const spans = [];
+        for (let i = 0; i + 1 < edges.length; i += 2) {
+            spans.push([edges[i], edges[i + 1]]);
+        }
+        return spans;
     }
     /**
      * Returns the smallest pattern tickmark `>= threshold` produced by an
@@ -308,7 +338,9 @@
             const marginY = config.hasHorizontalEdgeLine ? this.lineWidthCanvas : 0;
             this.gridWidth = this.container.offsetWidth * this.ratio;
             const rawHeight = this.container.offsetHeight * this.ratio;
-            if (this.termination === 'extend' && this._gridType !== 'columns') {
+            // `extend` rounds the canvas up so a horizontal line can close the bottom
+            // edge — meaningless for grid types that draw none.
+            if (this.termination === 'extend' && config.hasHorizontalEdgeLine) {
                 // Round up so a horizontal line closes the bottom edge. For `rows`
                 // the horizontals only sit on hGaps-pattern positions, so round up
                 // to the next pattern tickmark; otherwise to the next integer row.
@@ -396,6 +428,23 @@
             }
         }
         /**
+         * ribbons: the spans between the `vGaps` edge pairs as filled bands over the
+         * full canvas height. Same edge sequence as `drawColumns`, closed into
+         * rectangles instead of stroked.
+         *
+         * Both edges are floored, so a band starts exactly where its neighbour's gap
+         * ended — rounding each edge independently would leave seams or overlaps.
+         */
+        drawRibbons(gridSize, offset) {
+            if (!this.vGaps)
+                return;
+            for (const [start, end] of bandSpans(this.columnsTotal, this.vGaps)) {
+                const left = Math.floor(start * gridSize + offset);
+                const right = Math.floor(end * gridSize + offset);
+                this.context.rect(left, 0, right - left, this.canvasHeight);
+            }
+        }
+        /**
          * rows: horizontal lines from `hGaps`, vertical lines from `vGaps`. Both
          * patterns share the same grid unit (`gridSize = gridWidth / columnsTotal`).
          */
@@ -419,7 +468,9 @@
         }
         /**
          * Renders the grid in a single canvas path, dispatching to the grid-type
-         * specific helper. Stroke style and width are applied after the path is built.
+         * specific helper. Paint style is applied after the path is built: filled
+         * types close their subpaths with `rect()` and get one `fill()`, all others
+         * one `stroke()`. No type mixes the two, so a single path suffices.
          */
         draw() {
             this.context.beginPath();
@@ -435,6 +486,9 @@
                 case 'columns':
                     this.drawColumns(gridSize, offset);
                     break;
+                case 'ribbons':
+                    this.drawRibbons(gridSize, offset);
+                    break;
                 case 'rows':
                     this.drawRows(gridSize, offset);
                     break;
@@ -443,6 +497,11 @@
                     const _exhaustive = this._gridType;
                     throw new Error(`Unhandled gridType: ${String(_exhaustive)}`);
                 }
+            }
+            if (GRID_TYPE_CONFIG[this._gridType].isFilled) {
+                this.context.fillStyle = this._color;
+                this.context.fill();
+                return;
             }
             this.context.strokeStyle = this._color;
             this.context.lineWidth = this.lineWidthCanvas;

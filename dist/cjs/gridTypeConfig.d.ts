@@ -8,8 +8,14 @@ export interface GridTypeConfig {
     columnsLength: number;
     /** Human-readable shape used in validation error messages. */
     columnsShape: string;
-    /** Whether this grid type draws a horizontal line on the canvas edge (top/bottom). Drives `marginY`. */
+    /**
+     * Whether this grid type draws a horizontal line on the canvas edge (top/bottom).
+     * Drives `marginY` — and `termination: 'extend'`, which only means something
+     * when there is a horizontal line to close the bottom edge with.
+     */
     hasHorizontalEdgeLine: boolean;
+    /** Whether the path describes areas to fill rather than lines to stroke. */
+    isFilled: boolean;
     /** Maps a validated `columns` array to the per-axis gap patterns. */
     mapGaps(values: number[]): AppliedGaps;
 }

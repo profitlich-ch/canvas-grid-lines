@@ -5,6 +5,16 @@
  */
 export declare function gapPattern(max: number, gaps: [number, number]): Generator<number>;
 /**
+ * Pairs the alternating gap sequence into band spans `[start, end]` in grid
+ * units: every even-indexed edge opens a band, the next edge closes it.
+ * `gaps=[2,3]` at max 12 yields [0,2], [5,7], [10,12].
+ *
+ * A trailing edge without a partner is dropped. `gapPattern` does not guarantee
+ * an even number of edges — `gaps=[2,3]` at max 11 ends on an opening edge — and
+ * a band that is never closed has no width to fill.
+ */
+export declare function bandSpans(max: number, gaps: [number, number]): Array<[number, number]>;
+/**
  * Returns the smallest pattern tickmark `>= threshold` produced by an
  * alternating gap sequence starting at 0. Used to round up grid heights
  * to the next horizontal-line position for `termination: 'extend'` on

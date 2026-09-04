@@ -1,4 +1,4 @@
-const GRID_TYPES = ['baseline', 'squared', 'columns', 'rows'];
+const GRID_TYPES = ['baseline', 'squared', 'columns', 'ribbons', 'rows'];
 const UNITS = ['layoutpixel', 'devicepixel'];
 const TERMINATIONS = ['shorten', 'fill', 'extend'];
 export function isGridType(value) {

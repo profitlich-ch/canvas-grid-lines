@@ -1,4 +1,4 @@
-export type GridType = 'baseline' | 'squared' | 'columns' | 'rows';
+export type GridType = 'baseline' | 'squared' | 'columns' | 'ribbons' | 'rows';
 export type Units = 'layoutpixel' | 'devicepixel';
 export type Termination = 'shorten' | 'fill' | 'extend';
 export type ColumnsInput = number | string | number[];
@@ -7,12 +7,15 @@ export interface GridOptions {
      * Grid configuration. Number of values depends on `gridType`:
      * - `baseline` / `squared`: 1 value — total grid columns
      * - `columns`: 3 values — `total, gap1, gap2` (alternating vertical line gaps)
+     * - `ribbons`: 3 values — `total, band, gap`; same edge sequence as `columns`,
+     *   but the space between each edge pair is filled instead of outlined
      * - `rows`: 5 values — `total, v_gap1, v_gap2, h_gap1, h_gap2`
      *   (vertical-line gaps first, horizontal-line gaps second)
      *
      * Accepts a number, comma-separated string ("20,2,3") or number array ([20, 2, 3]).
      */
     columns?: ColumnsInput;
+    /** Stroke width. Ignored by filled grid types (`ribbons`), which have no outline. */
     lineWidth?: number;
     gridType?: GridType;
     color?: string;
@@ -26,7 +29,9 @@ export interface GridOptions {
      * - `'extend'` — the canvas is extended downward to the next multiple of
      *   `gridWidth / columns` so a horizontal bottom line can close the grid.
      *
-     * `'extend'` has no effect for `gridType: 'columns'` (no horizontal lines).
+     * `'extend'` has no effect for grid types without a horizontal edge line
+     * (`columns`, `ribbons`), and those ignore `'shorten'` / `'fill'` too — their
+     * marks span the full canvas height either way.
      */
     termination?: Termination;
 }

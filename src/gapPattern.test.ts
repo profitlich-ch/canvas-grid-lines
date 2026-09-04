@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gapPattern, nextGapTick } from './gapPattern';
+import { bandSpans, gapPattern, nextGapTick } from './gapPattern';
 
 function collect(max: number, gaps: [number, number]): number[] {
     return Array.from(gapPattern(max, gaps));
@@ -25,6 +25,30 @@ describe('gapPattern', () => {
 
     it('yields just 0 when max is 0', () => {
         expect(collect(0, [2, 3])).toEqual([0]);
+    });
+});
+
+describe('bandSpans', () => {
+    it('pairs the edge sequence into bands', () => {
+        // gapPattern(12, [2, 3]) is 0, 2, 5, 7, 10, 12
+        expect(bandSpans(12, [2, 3])).toEqual([[0, 2], [5, 7], [10, 12]]);
+    });
+
+    it('drops a trailing edge that never gets closed', () => {
+        // gapPattern(11, [2, 3]) is 0, 2, 5, 7, 10 — the 10 opens a band that has no end
+        expect(bandSpans(11, [2, 3])).toEqual([[0, 2], [5, 7]]);
+    });
+
+    it('yields no band when the sequence holds a single edge', () => {
+        expect(bandSpans(0, [2, 3])).toEqual([]);
+    });
+
+    it('covers the full range when band and gap divide it evenly', () => {
+        // the real desktop layout of lequipe-visuelle.ch: 12 columns of 4 units, gutter 1
+        const spans = bandSpans(59, [4, 1]);
+        expect(spans).toHaveLength(12);
+        expect(spans[0]).toEqual([0, 4]);
+        expect(spans[11]).toEqual([55, 59]);
     });
 });
 
