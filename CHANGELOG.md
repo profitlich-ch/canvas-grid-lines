@@ -11,6 +11,8 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
 
 ## [Unreleased]
 
+## [10.3.0] — 2026-09-04
+
 ### Added
 
 - `gridType: 'ribbons'` — filled column bands instead of stroked column edges.
@@ -29,4 +31,5 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
   every such grid type is exempt. No change in behaviour for the grid types that
   existed before.
 
-[Unreleased]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.2.1...HEAD
+[Unreleased]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.3.0...HEAD
+[10.3.0]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.2.1...v10.3.0
