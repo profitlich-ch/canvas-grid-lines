@@ -186,6 +186,14 @@ Termination has no effect on `columns` and `ribbons`: they draw no horizontal li
 ### Color (optional, default: black)
 A [CSS color value](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) setting the lines’ color — the fill color for `ribbons`.
 
+### Observe resize (optional, default: `false`)
+By default the grid is redrawn when the window resizes. A container that changes size on its own — images loading, a filter reflowing its content, an animation — keeps a canvas of the old size. Set `observeResize` to redraw whenever the container itself changes size. Settable via `data-grid-observe-resize` (the bare attribute or any value but `"false"` switches it on) or `{ observeResize: true }`.
+
+- Redraws are batched to at most one per grid per frame and skipped when the container's pixel size did not change.
+- It is off by default because every redraw reallocates the canvas bitmap. On tall containers at high device pixel ratios that is expensive, and during an animation that changes the container's height it would happen on every frame. If the size only settles at known moments, calling `refresh()` there is cheaper.
+- With `termination: 'extend'` the grid sets the container's `min-height`. The container then follows growth, but not shrinking below that height — call `refresh()` for that.
+- The window resize listener stays in place: a device pixel ratio change (browser zoom, moving the window to another screen) does not change the container's CSS size.
+
 ### Init marker
 Once a grid has been created on a container, the container receives the attribute `data-grid-initialised="true"`. Use it as a CSS hook (e.g. to fade the container in only after the grid is drawn).
 
@@ -200,11 +208,17 @@ grid.columns = '20,2,3';
 grid.gridType = 'columns';
 ```
 
+When the container changes size without the window resizing, call `refresh()` to re-measure it and redraw — for example at the end of an animation. See also `observeResize` above.
+
+```javascript
+grid.refresh();
+```
+
 
 ## Development
 
 ### Tests
-Pure helpers (`parseColumns`, `validateColumns`, `gapPattern`, `GRID_TYPE_CONFIG`) are covered by Vitest.
+Pure helpers (`parseColumns`, `validateColumns`, `gapPattern`, `GRID_TYPE_CONFIG`, `createFrameBatch`, `parseBooleanAttribute`) are covered by Vitest.
 
 ```
 npm test        # single run

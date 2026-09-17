@@ -1,0 +1,10 @@
+/**
+ * Returns a function that queues items and hands each of them to `run` once,
+ * on the next frame requested through `requestFrame`. Queuing an item that is
+ * already waiting has no effect, so a burst of notifications for the same item
+ * within one frame costs a single run.
+ *
+ * The queue is emptied before the items run: an item queued again while
+ * `run` is executing waits for the following frame instead of being lost.
+ */
+export declare function createFrameBatch<T>(requestFrame: (callback: () => void) => void, run: (item: T) => void): (item: T) => void;

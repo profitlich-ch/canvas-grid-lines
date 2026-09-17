@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.canvasGridLines = exports.CanvasGridLines = void 0;
 const types_1 = require("./types");
 const constants_1 = require("./constants");
+const frameBatch_1 = require("./frameBatch");
 const gridTypeConfig_1 = require("./gridTypeConfig");
 const parseColumns_1 = require("./parseColumns");
 const gapPattern_1 = require("./gapPattern");
@@ -10,10 +11,11 @@ const gapPattern_1 = require("./gapPattern");
  * Draws a crisp grid onto an HTML canvas appended to `container`.
  *
  * Each instance owns one container element and one canvas. The canvas is
- * resized and redrawn on window resize, and on demand via the setters for
- * `columns`, `gridType`, `color` and `lineWidth`. Containers that are not
- * visible at construction time are observed and initialised lazily once they
- * enter the viewport.
+ * resized and redrawn on window resize, on container resize when
+ * `observeResize` is set, on `refresh()`, and via the setters for `columns`,
+ * `gridType`, `color` and `lineWidth`. Containers that are not visible at
+ * construction time are observed and initialised lazily once they enter the
+ * viewport.
  */
 class CanvasGridLines {
     constructor(container, options = {}) {
@@ -30,6 +32,9 @@ class CanvasGridLines {
         /** False until the canvas has been created — guards lazy initialisation. */
         this.isInitialized = false;
         this.resizeHandler = () => this.scale();
+        /** Container size at the last `scale()`, recorded only with `observeResize`. */
+        this.scaledWidth = -1;
+        this.scaledHeight = -1;
         this.container = container;
         // gridType — explicit option wins, then HTML data attribute, then default. Validated.
         const gridTypeRaw = options.gridType ?? container.getAttribute('data-grid-type') ?? constants_1.DEFAULT_GRID_TYPE;
@@ -53,6 +58,9 @@ class CanvasGridLines {
             throw new Error(`Invalid termination "${terminationRaw}"`);
         }
         this.termination = terminationRaw;
+        this.observeResize = options.observeResize
+            ?? (0, types_1.parseBooleanAttribute)(container.getAttribute('data-grid-observe-resize'))
+            ?? constants_1.DEFAULT_OBSERVE_RESIZE;
         const rawColumns = options.columns
             ?? container.getAttribute('data-grid-columns')
             ?? constants_1.DEFAULT_COLUMNS;
@@ -91,7 +99,52 @@ class CanvasGridLines {
         this.context = this.canvas.getContext('2d');
         this.isInitialized = true;
         this.scale();
+        // Kept alongside the observer: a devicePixelRatio change (browser zoom,
+        // moving to another screen) fires `resize` but leaves the CSS size alone.
         window.addEventListener('resize', this.resizeHandler);
+        if (this.observeResize)
+            this.observeContainerResize();
+    }
+    /** Registers the container with the shared observer. No-op where ResizeObserver is missing. */
+    observeContainerResize() {
+        if (typeof ResizeObserver === 'undefined')
+            return;
+        CanvasGridLines.resizeObserver ?? (CanvasGridLines.resizeObserver = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                const grid = CanvasGridLines.observedGrids.get(entry.target);
+                if (grid)
+                    CanvasGridLines.queueResized(grid);
+            }
+        }));
+        CanvasGridLines.observedGrids.set(this.container, this);
+        CanvasGridLines.resizeObserver.observe(this.container);
+    }
+    /**
+     * Rescales only if the container's pixel size changed since the last
+     * `scale()`. `scale()` measures `offsetWidth`/`offsetHeight`, which are
+     * whole pixels, so a smaller change would produce the identical canvas.
+     * This also swallows the notification that `observe()` fires on its own,
+     * and the one caused by `extend` growing the container.
+     */
+    refreshIfResized() {
+        if (this.container.offsetWidth === this.scaledWidth
+            && this.container.offsetHeight === this.scaledHeight) {
+            return;
+        }
+        this.scale();
+    }
+    /**
+     * Re-measures the container and redraws the grid. Call it after anything
+     * that changes the container's size without resizing the window — content
+     * loading, a layout switch, the end of an animation — or use
+     * `observeResize` to have it happen automatically.
+     *
+     * Before the container has become visible this does nothing; the lazy
+     * initialisation measures on its own.
+     */
+    refresh() {
+        if (this.isInitialized)
+            this.scale();
     }
     /**
      * Watches a not-yet-visible container and initialises it the moment it
@@ -160,6 +213,7 @@ class CanvasGridLines {
         this.container.style.minHeight = '';
         void this.container.offsetHeight;
         if (this.container.offsetHeight === 0 || this.container.offsetWidth === 0) {
+            this.recordScaledSize();
             return;
         }
         this.ratio = window.devicePixelRatio || 1;
@@ -212,7 +266,19 @@ class CanvasGridLines {
         // CSS size (layout pixels) — the browser scales the device-pixel canvas back down.
         this.canvas.style.width = this.canvasWidth / this.ratio + 'px';
         this.canvas.style.height = this.canvasHeight / this.ratio + 'px';
+        this.recordScaledSize();
         this.redraw();
+    }
+    /**
+     * Remembers the size the canvas was built for, after `extend` has applied
+     * its `min-height`. Skipped without `observeResize`: the read forces a
+     * layout that nobody else needs.
+     */
+    recordScaledSize() {
+        if (!this.observeResize)
+            return;
+        this.scaledWidth = this.container.offsetWidth;
+        this.scaledHeight = this.container.offsetHeight;
     }
     /** Clears the canvas and re-runs the draw cycle. Cheaper than `scale()`. */
     redraw() {
@@ -345,6 +411,19 @@ class CanvasGridLines {
     }
 }
 exports.CanvasGridLines = CanvasGridLines;
+/**
+ * One observer for all grids with `observeResize`, created on first use.
+ * A page often carries dozens of grids; one observer per grid would buy
+ * nothing but bookkeeping.
+ */
+CanvasGridLines.resizeObserver = null;
+CanvasGridLines.observedGrids = new Map();
+/**
+ * Redraws on the next frame, not inside the observer callback: `scale()`
+ * changes `min-height` under `termination: 'extend'`, and a size change
+ * inside the callback makes browsers report a "ResizeObserver loop" error.
+ */
+CanvasGridLines.queueResized = (0, frameBatch_1.createFrameBatch)(callback => window.requestAnimationFrame(callback), grid => grid.refreshIfResized());
 /**
  * Convenience facade for bulk-managing grids.
  *

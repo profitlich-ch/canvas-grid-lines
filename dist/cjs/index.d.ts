@@ -4,12 +4,26 @@ export type { GridOptions, GridType, InitGridOptions, Termination, Units, Column
  * Draws a crisp grid onto an HTML canvas appended to `container`.
  *
  * Each instance owns one container element and one canvas. The canvas is
- * resized and redrawn on window resize, and on demand via the setters for
- * `columns`, `gridType`, `color` and `lineWidth`. Containers that are not
- * visible at construction time are observed and initialised lazily once they
- * enter the viewport.
+ * resized and redrawn on window resize, on container resize when
+ * `observeResize` is set, on `refresh()`, and via the setters for `columns`,
+ * `gridType`, `color` and `lineWidth`. Containers that are not visible at
+ * construction time are observed and initialised lazily once they enter the
+ * viewport.
  */
 export declare class CanvasGridLines {
+    /**
+     * One observer for all grids with `observeResize`, created on first use.
+     * A page often carries dozens of grids; one observer per grid would buy
+     * nothing but bookkeeping.
+     */
+    private static resizeObserver;
+    private static observedGrids;
+    /**
+     * Redraws on the next frame, not inside the observer callback: `scale()`
+     * changes `min-height` under `termination: 'extend'`, and a size change
+     * inside the callback makes browsers report a "ResizeObserver loop" error.
+     */
+    private static queueResized;
     readonly container: HTMLElement;
     /** First value of the parsed `columns` input — the grid resolution. */
     columnsTotal: number;
@@ -17,6 +31,7 @@ export declare class CanvasGridLines {
     columnsRaw: number[];
     readonly units: Units;
     readonly termination: Termination;
+    readonly observeResize: boolean;
     private _gridType;
     private _color;
     private _lineWidth;
@@ -35,6 +50,9 @@ export declare class CanvasGridLines {
     /** False until the canvas has been created — guards lazy initialisation. */
     private isInitialized;
     private resizeHandler;
+    /** Container size at the last `scale()`, recorded only with `observeResize`. */
+    private scaledWidth;
+    private scaledHeight;
     constructor(container: HTMLElement, options?: GridOptions);
     /** Pure-helper wrapper that copies the result into the instance fields. */
     private applyColumnsInput;
@@ -43,6 +61,26 @@ export declare class CanvasGridLines {
      * Idempotent — repeated calls are a no-op once initialised.
      */
     private initialize;
+    /** Registers the container with the shared observer. No-op where ResizeObserver is missing. */
+    private observeContainerResize;
+    /**
+     * Rescales only if the container's pixel size changed since the last
+     * `scale()`. `scale()` measures `offsetWidth`/`offsetHeight`, which are
+     * whole pixels, so a smaller change would produce the identical canvas.
+     * This also swallows the notification that `observe()` fires on its own,
+     * and the one caused by `extend` growing the container.
+     */
+    private refreshIfResized;
+    /**
+     * Re-measures the container and redraws the grid. Call it after anything
+     * that changes the container's size without resizing the window — content
+     * loading, a layout switch, the end of an animation — or use
+     * `observeResize` to have it happen automatically.
+     *
+     * Before the container has become visible this does nothing; the lazy
+     * initialisation measures on its own.
+     */
+    refresh(): void;
     /**
      * Watches a not-yet-visible container and initialises it the moment it
      * intersects the viewport. The observer disconnects after the first hit.
@@ -72,6 +110,12 @@ export declare class CanvasGridLines {
      * when a previously visible container becomes hidden.
      */
     private scale;
+    /**
+     * Remembers the size the canvas was built for, after `extend` has applied
+     * its `min-height`. Skipped without `observeResize`: the read forces a
+     * layout that nobody else needs.
+     */
+    private recordScaledSize;
     /** Clears the canvas and re-runs the draw cycle. Cheaper than `scale()`. */
     private redraw;
     /** Draws a horizontal line at `y`, spanning the full canvas width by default. */

@@ -11,6 +11,20 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
 
 ## [Unreleased]
 
+### Added
+
+- `refresh()` — re-measures the container and redraws the grid. Until now a
+  container that changed size without the window resizing kept a canvas of
+  the old size; the only way to redraw was reassigning a setter such as
+  `grid.columns = grid.columns`, relying on its side effect.
+- `observeResize` option (`data-grid-observe-resize`) — redraws whenever the
+  container itself changes size, not only on window resize. Off by default,
+  because every redraw reallocates the canvas bitmap. All grids share one
+  `ResizeObserver`; redraws are batched to at most one per grid per frame and
+  skipped when the container's pixel size is unchanged. With
+  `termination: 'extend'` the pinned `min-height` lets the container follow
+  growth but not shrinking; call `refresh()` for that.
+
 ## [10.3.0] — 2026-09-04
 
 ### Added

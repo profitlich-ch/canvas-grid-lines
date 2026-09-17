@@ -5,5 +5,6 @@ export declare const DEFAULT_LINE_WIDTH: number;
 export declare const DEFAULT_COLOR: string;
 export declare const DEFAULT_UNITS: Units;
 export declare const DEFAULT_TERMINATION: Termination;
+export declare const DEFAULT_OBSERVE_RESIZE: boolean;
 /** Attribute set on the container once its grid has been initialised. CSS hook. */
 export declare const INIT_MARKER_ATTR: string;

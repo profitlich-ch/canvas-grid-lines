@@ -34,6 +34,18 @@ export interface GridOptions {
      * marks span the full canvas height either way.
      */
     termination?: Termination;
+    /**
+     * Redraw whenever the container's size changes, not only on window resize.
+     * Use it when the container grows or shrinks with its content — images
+     * loading, filters, animations. Off by default: every size change
+     * reallocates the canvas bitmap, which costs on tall containers.
+     *
+     * Redraws are batched to at most one per grid per frame and skipped when
+     * the container's pixel size did not change. With `termination: 'extend'`
+     * the grid pins the container's `min-height`, so it follows growth but not
+     * shrinking; call `refresh()` for that.
+     */
+    observeResize?: boolean;
 }
 export interface InitGridOptions extends GridOptions {
     targets: string | HTMLElement | NodeListOf<HTMLElement>;
@@ -41,3 +53,9 @@ export interface InitGridOptions extends GridOptions {
 export declare function isGridType(value: string | null | undefined): value is GridType;
 export declare function isUnits(value: string | null | undefined): value is Units;
 export declare function isTermination(value: string | null | undefined): value is Termination;
+/**
+ * Reads a boolean `data-*` attribute. A missing attribute yields `undefined`,
+ * so the caller's default applies; `"false"` yields `false`; any other value,
+ * including the bare attribute (`""`), yields `true`.
+ */
+export declare function parseBooleanAttribute(value: string | null): boolean | undefined;
