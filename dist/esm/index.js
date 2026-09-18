@@ -4,7 +4,7 @@ import { createFrameBatch } from './frameBatch';
 import { GRID_TYPE_CONFIG } from './gridTypeConfig';
 import { applyColumns } from './parseColumns';
 import { bandSpans, gapPattern, nextGapTick } from './gapPattern';
-import { linePosition } from './linePosition';
+import { leadingOverhang, linePosition } from './linePosition';
 /**
  * Draws a crisp grid onto an HTML canvas appended to `container`.
  *
@@ -27,6 +27,8 @@ export class CanvasGridLines {
         this.canvasHeight = 0;
         this.canvasWidth = 0;
         this.lineWidthCanvas = 0;
+        /** Canvas overhang before the container's left edge, in device pixels. */
+        this.overhangLeft = 0;
         /** False until the canvas has been created — guards lazy initialisation. */
         this.isInitialized = false;
         this.resizeHandler = () => this.scale();
@@ -218,9 +220,10 @@ export class CanvasGridLines {
         // `lineWidth` is interpreted as CSS pixels (`layoutpixel`) or as physical
         // canvas pixels (`devicepixel`); the canvas always works in physical pixels.
         this.lineWidthCanvas = this.units === 'layoutpixel' ? this._lineWidth / this.ratio : this._lineWidth;
-        // Edge lines would otherwise be clipped in half — extend the canvas by
-        // one line width along axes that carry an edge line. Horizontal-axis
-        // edge lines are always added (vertical lines always reach the side edges).
+        // Edge lines stick out of the container — extend the canvas by one line
+        // width along axes that carry an edge line. The vertical axis only
+        // needs it where the grid type draws horizontal edge lines; vertical
+        // lines always reach the side edges.
         const config = GRID_TYPE_CONFIG[this._gridType];
         const marginX = this.lineWidthCanvas;
         const marginY = config.hasHorizontalEdgeLine ? this.lineWidthCanvas : 0;
@@ -259,8 +262,11 @@ export class CanvasGridLines {
         // Physical canvas size (device pixels).
         this.canvas.height = this.canvasHeight;
         this.canvas.width = this.canvasWidth;
-        // Negative margins pull the oversized canvas back so it stays centred on the container.
-        this.canvas.style.margin = `${marginY * -0.5 / this.ratio}px ${marginX * -0.5 / this.ratio}px`;
+        // Negative margins pull the oversized canvas back over the top/left edge by
+        // whole device pixels; the rest of the overhang lies past the bottom/right edge.
+        this.overhangLeft = leadingOverhang(marginX);
+        const overhangTop = leadingOverhang(marginY);
+        this.canvas.style.margin = `${-overhangTop / this.ratio}px 0 0 ${-this.overhangLeft / this.ratio}px`;
         // CSS size (layout pixels) — the browser scales the device-pixel canvas back down.
         this.canvas.style.width = this.canvasWidth / this.ratio + 'px';
         this.canvas.style.height = this.canvasHeight / this.ratio + 'px';
@@ -334,13 +340,15 @@ export class CanvasGridLines {
      *
      * Both edges are floored, so a band starts exactly where its neighbour's gap
      * ended — rounding each edge independently would leave seams or overlaps.
+     * The canvas overhang is added back so the edges land on the grid position
+     * in the container, not in the canvas.
      */
-    drawRibbons(gridSize, offset) {
+    drawRibbons(gridSize) {
         if (!this.vGaps)
             return;
         for (const [start, end] of bandSpans(this.columnsTotal, this.vGaps)) {
-            const left = Math.floor(start * gridSize + offset);
-            const right = Math.floor(end * gridSize + offset);
+            const left = Math.floor(start * gridSize) + this.overhangLeft;
+            const right = Math.floor(end * gridSize) + this.overhangLeft;
             this.context.rect(left, 0, right - left, this.canvasHeight);
         }
     }
@@ -387,7 +395,7 @@ export class CanvasGridLines {
                 this.drawColumns(gridSize, offset);
                 break;
             case 'ribbons':
-                this.drawRibbons(gridSize, offset);
+                this.drawRibbons(gridSize);
                 break;
             case 'rows':
                 this.drawRows(gridSize, offset);

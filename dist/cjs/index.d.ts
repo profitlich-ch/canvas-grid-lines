@@ -45,6 +45,8 @@ export declare class CanvasGridLines {
     private canvasHeight;
     private canvasWidth;
     private lineWidthCanvas;
+    /** Canvas overhang before the container's left edge, in device pixels. */
+    private overhangLeft;
     private canvas;
     private context;
     /** False until the canvas has been created — guards lazy initialisation. */
@@ -135,6 +137,8 @@ export declare class CanvasGridLines {
      *
      * Both edges are floored, so a band starts exactly where its neighbour's gap
      * ended — rounding each edge independently would leave seams or overlaps.
+     * The canvas overhang is added back so the edges land on the grid position
+     * in the container, not in the canvas.
      */
     private drawRibbons;
     /**

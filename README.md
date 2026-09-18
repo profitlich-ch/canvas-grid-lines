@@ -171,6 +171,8 @@ If the number of values does not match the grid type, an error is thrown. All va
 ### Line width
 Line width as integer or float. Ignored by `ribbons`, which fills areas and has no outline.
 
+Lines of an even width (in device pixels) are centred on their grid position. An odd-width line cannot be — its centre would fall between two pixels — so it sits half a pixel after the position: a 1px line fills the pixel right of / below it. That keeps every line crisp and the top and left edge lines inside the container; the bottom and right edge lines stick out of it by one pixel.
+
 ### Units (optional, default: layoutPixel)
 The units parameter tells the script how to interpret the line width: either layout size (`layoutpixel` as in CSS) or physical pixels (`devicepixel`).
 

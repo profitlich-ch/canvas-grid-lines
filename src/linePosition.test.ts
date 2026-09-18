@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { linePosition } from './linePosition';
+import { leadingOverhang, linePosition } from './linePosition';
 
 describe('linePosition', () => {
     it('keeps the half line width on the first line', () => {
@@ -13,5 +13,21 @@ describe('linePosition', () => {
 
     it('centres an even-width line on a pixel boundary', () => {
         expect(linePosition(3, 34.39, 1)).toBe(104);
+    });
+});
+
+describe('leadingOverhang', () => {
+    it('keeps an odd-width canvas on whole device pixels', () => {
+        expect(leadingOverhang(1)).toBe(0);
+        expect(leadingOverhang(3)).toBe(1);
+    });
+
+    it('splits an even width evenly', () => {
+        expect(leadingOverhang(2)).toBe(1);
+        expect(leadingOverhang(10)).toBe(5);
+    });
+
+    it('is zero without a line width', () => {
+        expect(leadingOverhang(0)).toBe(0);
     });
 });

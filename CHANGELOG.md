@@ -11,6 +11,17 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
 
 ## [Unreleased]
 
+### Changed
+
+- The canvas is offset by whole device pixels only. It used to be pulled back
+  over the top and left edge by half the line width, which for odd widths
+  (e.g. 1px) placed it at half a pixel — the browser then decided whether to
+  blur it or snap it, and in which direction. The overhang before the top/left
+  edge is now `Math.floor(lineWidth / 2)`, the rest lies past the bottom/right
+  edge. Even widths stay centred on their grid position; an odd-width line now
+  sits reliably half a pixel after it, and a 1px canvas starts flush with the
+  container. Ribbon edges follow the same grid positions.
+
 ## [10.4.1] — 2026-09-18
 
 ### Fixed

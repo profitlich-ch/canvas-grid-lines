@@ -24,7 +24,7 @@ import { createFrameBatch } from './frameBatch';
 import { GRID_TYPE_CONFIG } from './gridTypeConfig';
 import { applyColumns } from './parseColumns';
 import { bandSpans, gapPattern, nextGapTick } from './gapPattern';
-import { linePosition } from './linePosition';
+import { leadingOverhang, linePosition } from './linePosition';
 
 export type { GridOptions, GridType, InitGridOptions, Termination, Units, ColumnsInput };
 
@@ -82,6 +82,8 @@ export class CanvasGridLines {
     private canvasHeight: number = 0;
     private canvasWidth: number = 0;
     private lineWidthCanvas: number = 0;
+    /** Canvas overhang before the container's left edge, in device pixels. */
+    private overhangLeft: number = 0;
     private canvas!: HTMLCanvasElement;
     private context!: CanvasRenderingContext2D;
 
@@ -298,9 +300,10 @@ export class CanvasGridLines {
         // canvas pixels (`devicepixel`); the canvas always works in physical pixels.
         this.lineWidthCanvas = this.units === 'layoutpixel' ? this._lineWidth / this.ratio : this._lineWidth;
 
-        // Edge lines would otherwise be clipped in half — extend the canvas by
-        // one line width along axes that carry an edge line. Horizontal-axis
-        // edge lines are always added (vertical lines always reach the side edges).
+        // Edge lines stick out of the container — extend the canvas by one line
+        // width along axes that carry an edge line. The vertical axis only
+        // needs it where the grid type draws horizontal edge lines; vertical
+        // lines always reach the side edges.
         const config = GRID_TYPE_CONFIG[this._gridType];
         const marginX: number = this.lineWidthCanvas;
         const marginY: number = config.hasHorizontalEdgeLine ? this.lineWidthCanvas : 0;
@@ -343,8 +346,11 @@ export class CanvasGridLines {
         this.canvas.height = this.canvasHeight;
         this.canvas.width = this.canvasWidth;
 
-        // Negative margins pull the oversized canvas back so it stays centred on the container.
-        this.canvas.style.margin = `${marginY * -0.5 / this.ratio}px ${marginX * -0.5 / this.ratio}px`;
+        // Negative margins pull the oversized canvas back over the top/left edge by
+        // whole device pixels; the rest of the overhang lies past the bottom/right edge.
+        this.overhangLeft = leadingOverhang(marginX);
+        const overhangTop = leadingOverhang(marginY);
+        this.canvas.style.margin = `${-overhangTop / this.ratio}px 0 0 ${-this.overhangLeft / this.ratio}px`;
 
         // CSS size (layout pixels) — the browser scales the device-pixel canvas back down.
         this.canvas.style.width = this.canvasWidth / this.ratio + 'px';
@@ -428,12 +434,14 @@ export class CanvasGridLines {
      *
      * Both edges are floored, so a band starts exactly where its neighbour's gap
      * ended — rounding each edge independently would leave seams or overlaps.
+     * The canvas overhang is added back so the edges land on the grid position
+     * in the container, not in the canvas.
      */
-    private drawRibbons(gridSize: number, offset: number): void {
+    private drawRibbons(gridSize: number): void {
         if (!this.vGaps) return;
         for (const [start, end] of bandSpans(this.columnsTotal, this.vGaps)) {
-            const left = Math.floor(start * gridSize + offset);
-            const right = Math.floor(end * gridSize + offset);
+            const left = Math.floor(start * gridSize) + this.overhangLeft;
+            const right = Math.floor(end * gridSize) + this.overhangLeft;
             this.context.rect(left, 0, right - left, this.canvasHeight);
         }
     }
@@ -479,7 +487,7 @@ export class CanvasGridLines {
             case 'baseline': this.drawBaseline(gridSize, offset); break;
             case 'squared':  this.drawSquared(gridSize, offset); break;
             case 'columns':  this.drawColumns(gridSize, offset); break;
-            case 'ribbons':  this.drawRibbons(gridSize, offset); break;
+            case 'ribbons':  this.drawRibbons(gridSize); break;
             case 'rows':     this.drawRows(gridSize, offset); break;
             default: {
                 // Exhaustiveness check — fails the build if a new GridType is added without a handler.
