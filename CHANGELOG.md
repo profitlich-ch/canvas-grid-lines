@@ -11,6 +11,8 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
 
 ## [Unreleased]
 
+## [10.5.1] — 2026-09-18
+
 ### Fixed
 
 - A container sized in whole grid units no longer loses or gains a row to
@@ -82,7 +84,8 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
   every such grid type is exempt. No change in behaviour for the grid types that
   existed before.
 
-[Unreleased]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.5.0...HEAD
+[Unreleased]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.5.1...HEAD
+[10.5.1]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.5.0...v10.5.1
 [10.5.0]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.4.1...v10.5.0
 [10.4.1]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.4.0...v10.4.1
 [10.4.0]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.3.0...v10.4.0
