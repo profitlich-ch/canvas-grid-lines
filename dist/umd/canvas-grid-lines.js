@@ -205,6 +205,18 @@
     }
 
     /**
+     * Canvas coordinate of a line's centre at `units` grid units.
+     *
+     * Snaps the grid position to a whole pixel first and adds the half line width
+     * afterwards. Adding `offset` before rounding would swallow it again: the line
+     * centre lands on a pixel boundary, an odd-width line smears across two pixels,
+     * and the first line sticks out of the canvas by half its width.
+     */
+    function linePosition(units, gridSize, offset) {
+        return Math.floor(units * gridSize) + offset;
+    }
+
+    /**
      * Draws a crisp grid onto an HTML canvas appended to `container`.
      *
      * Each instance owns one container element and one canvas. The canvas is
@@ -500,22 +512,22 @@
             // instead of 18 after `Math.ceil(rawHeight/gridSize) * gridSize` at termination='extend'.
             const lastN = Math.floor(this.gridHeight / gridSize + 1e-9);
             for (let n = 0; n <= lastN; n++) {
-                this.horizontalLine(Math.floor(n * gridSize + offset));
+                this.horizontalLine(linePosition(n, gridSize, offset));
             }
         }
         /** squared: baseline pattern plus one vertical line per grid unit. */
         drawSquared(gridSize, offset) {
             this.drawBaseline(gridSize, offset);
             // `fill`: vertical lines run to the canvas edge; otherwise they stop at the
-            // last horizontal line (last full grid row). Epsilon matches `drawBaseline`
-            // so float drift doesn't drop the bottom row at termination='extend'.
+            // lower edge of the last horizontal line (last full grid row). Epsilon
+            // matches `drawBaseline` so float drift doesn't drop the bottom row at
+            // termination='extend'.
             const lastN = Math.floor(this.gridHeight / gridSize + 1e-9);
             const lineLength = this.termination === 'fill'
                 ? this.canvasHeight
-                : lastN * gridSize + offset;
-            this.verticalLine(offset, lineLength);
-            for (let col = 1; col <= this.columnsTotal; col++) {
-                this.verticalLine(Math.floor(col * gridSize + offset), lineLength);
+                : Math.floor(lastN * gridSize) + this.lineWidthCanvas;
+            for (let col = 0; col <= this.columnsTotal; col++) {
+                this.verticalLine(linePosition(col, gridSize, offset), lineLength);
             }
         }
         /** columns: vertical lines placed according to the alternating `vGaps` pattern. */
@@ -523,7 +535,7 @@
             if (!this.vGaps)
                 return;
             for (const col of gapPattern(this.columnsTotal, this.vGaps)) {
-                this.verticalLine(Math.floor(col * gridSize + offset));
+                this.verticalLine(linePosition(col, gridSize, offset));
             }
         }
         /**
@@ -556,13 +568,13 @@
             let lastRow = 0;
             for (const row of gapPattern(verticalRange, this.hGaps)) {
                 lastRow = row;
-                this.horizontalLine(Math.floor(row * gridSize + offset));
+                this.horizontalLine(linePosition(row, gridSize, offset));
             }
             const lineLength = this.termination === 'fill'
                 ? this.canvasHeight
-                : lastRow * gridSize + offset;
+                : Math.floor(lastRow * gridSize) + this.lineWidthCanvas;
             for (const col of gapPattern(this.columnsTotal, this.vGaps)) {
-                this.verticalLine(Math.floor(col * gridSize + offset), lineLength);
+                this.verticalLine(linePosition(col, gridSize, offset), lineLength);
             }
         }
         /**

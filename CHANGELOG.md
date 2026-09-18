@@ -11,6 +11,14 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
 
 ## [Unreleased]
 
+### Fixed
+
+- Lines are placed half a line width off the rounded grid position, as the
+  canvas margins intended. The half width was rounded away, so the top line
+  was cut in half and every other odd-width line (e.g. 1px) was smeared
+  across two half-opaque pixels. Vertical lines of `squared` and `rows` now
+  end at the lower edge of the last horizontal line instead of its centre.
+
 ## [10.4.0] — 2026-09-17
 
 ### Added
