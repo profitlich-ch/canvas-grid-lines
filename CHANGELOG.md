@@ -11,6 +11,8 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
 
 ## [Unreleased]
 
+## [10.4.1] — 2026-09-18
+
 ### Fixed
 
 - Lines are placed half a line width off the rounded grid position, as the
@@ -55,6 +57,7 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
   every such grid type is exempt. No change in behaviour for the grid types that
   existed before.
 
-[Unreleased]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.4.0...HEAD
+[Unreleased]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.4.1...HEAD
+[10.4.1]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.4.0...v10.4.1
 [10.4.0]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.3.0...v10.4.0
 [10.3.0]: https://github.com/profitlich-ch/canvas-grid-lines/compare/v10.2.1...v10.3.0
