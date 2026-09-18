@@ -118,6 +118,8 @@ export declare class CanvasGridLines {
      * layout that nobody else needs.
      */
     private recordScaledSize;
+    /** Rows in `height` (device pixels), snapped to a whole row within `ROW_SNAP_TOLERANCE`. */
+    private snappedRows;
     /** Clears the canvas and re-runs the draw cycle. Cheaper than `scale()`. */
     private redraw;
     /** Draws a horizontal line at `y`, spanning the full canvas width by default. */

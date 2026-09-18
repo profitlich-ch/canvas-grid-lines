@@ -11,6 +11,18 @@ and the [tags](https://github.com/profitlich-ch/canvas-grid-lines/tags).
 
 ## [Unreleased]
 
+### Fixed
+
+- A container sized in whole grid units no longer loses or gains a row to
+  sub-pixel rounding. The container used to be measured with
+  `offsetWidth`/`offsetHeight`, which round width and height to whole pixels
+  independently, so a height of exactly 32 rows could measure as 31.99 or
+  32.02: `shorten` and `fill` then dropped the bottom line, `extend` added a
+  whole row. The size is now measured with `getBoundingClientRect()`, and a
+  height within half a pixel of a whole row counts as that row.
+- The canvas bitmap is sized in whole device pixels, so lines no longer blur
+  when the bitmap is stretched to a fractional CSS size.
+
 ## [10.5.0] — 2026-09-18
 
 ### Changed

@@ -1,10 +1,11 @@
 import { isGridType, isTermination, isUnits, parseBooleanAttribute, } from './types';
-import { DEFAULT_COLOR, DEFAULT_COLUMNS, DEFAULT_GRID_TYPE, DEFAULT_LINE_WIDTH, DEFAULT_OBSERVE_RESIZE, DEFAULT_TERMINATION, DEFAULT_UNITS, INIT_MARKER_ATTR, } from './constants';
+import { DEFAULT_COLOR, DEFAULT_COLUMNS, DEFAULT_GRID_TYPE, DEFAULT_LINE_WIDTH, DEFAULT_OBSERVE_RESIZE, DEFAULT_TERMINATION, DEFAULT_UNITS, INIT_MARKER_ATTR, ROW_SNAP_TOLERANCE, } from './constants';
 import { createFrameBatch } from './frameBatch';
 import { GRID_TYPE_CONFIG } from './gridTypeConfig';
 import { applyColumns } from './parseColumns';
 import { bandSpans, gapPattern, nextGapTick } from './gapPattern';
 import { leadingOverhang, linePosition } from './linePosition';
+import { snappedRows } from './rowCount';
 /**
  * Draws a crisp grid onto an HTML canvas appended to `container`.
  *
@@ -227,8 +228,12 @@ export class CanvasGridLines {
         const config = GRID_TYPE_CONFIG[this._gridType];
         const marginX = this.lineWidthCanvas;
         const marginY = config.hasHorizontalEdgeLine ? this.lineWidthCanvas : 0;
-        this.gridWidth = this.container.offsetWidth * this.ratio;
-        const rawHeight = this.container.offsetHeight * this.ratio;
+        // Fractional size: `offsetWidth`/`offsetHeight` round width and height
+        // independently to whole pixels, which can put a container sized in
+        // whole grid units a pixel off a row boundary.
+        const rect = this.container.getBoundingClientRect();
+        this.gridWidth = rect.width * this.ratio;
+        const rawHeight = rect.height * this.ratio;
         // `extend` rounds the canvas up so a horizontal line can close the bottom
         // edge — meaningless for grid types that draw none.
         if (this.termination === 'extend' && config.hasHorizontalEdgeLine) {
@@ -236,10 +241,10 @@ export class CanvasGridLines {
             // the horizontals only sit on hGaps-pattern positions, so round up
             // to the next pattern tickmark; otherwise to the next integer row.
             const gridSize = this.gridWidth / this.columnsTotal;
-            const rawRows = rawHeight / gridSize;
+            const rawRows = this.snappedRows(rawHeight, gridSize);
             const targetRows = (this._gridType === 'rows' && this.hGaps)
-                ? nextGapTick(rawRows - 1e-9, this.hGaps)
-                : Math.ceil(rawRows - 1e-9);
+                ? nextGapTick(rawRows, this.hGaps)
+                : Math.ceil(rawRows);
             this.gridHeight = targetRows * gridSize;
             // Grow the container itself so its background/border wraps the extension.
             // `min-height` refers to the content area under `content-box` (default),
@@ -257,8 +262,13 @@ export class CanvasGridLines {
         else {
             this.gridHeight = rawHeight;
         }
-        this.canvasHeight = this.gridHeight + marginY;
-        this.canvasWidth = this.gridWidth + marginX;
+        // Whole device pixels: `canvas.width/height` truncate, and a bitmap
+        // smaller than its CSS size gets stretched and blurs the lines. The
+        // height also leaves room for a bottom line snapped past `gridHeight`.
+        const gridSize = this.gridWidth / this.columnsTotal;
+        const snappedBottom = Math.floor(Math.floor(this.snappedRows(this.gridHeight, gridSize)) * gridSize);
+        this.canvasHeight = Math.ceil(Math.max(this.gridHeight, snappedBottom) + marginY);
+        this.canvasWidth = Math.ceil(this.gridWidth + marginX);
         // Physical canvas size (device pixels).
         this.canvas.height = this.canvasHeight;
         this.canvas.width = this.canvasWidth;
@@ -284,6 +294,10 @@ export class CanvasGridLines {
         this.scaledWidth = this.container.offsetWidth;
         this.scaledHeight = this.container.offsetHeight;
     }
+    /** Rows in `height` (device pixels), snapped to a whole row within `ROW_SNAP_TOLERANCE`. */
+    snappedRows(height, gridSize) {
+        return snappedRows(height, gridSize, ROW_SNAP_TOLERANCE * this.ratio);
+    }
     /** Clears the canvas and re-runs the draw cycle. Cheaper than `scale()`. */
     redraw() {
         this.context.setTransform(1, 0, 0, 1, 0, 0);
@@ -302,10 +316,8 @@ export class CanvasGridLines {
     }
     /** baseline: one horizontal line per grid unit, full width. */
     drawBaseline(gridSize, offset) {
-        // Integer counter + epsilon: avoids float-accumulation drift in `y += gridSize`
-        // and the float wobble that makes `gridHeight / gridSize` land at e.g. 17.999…
-        // instead of 18 after `Math.ceil(rawHeight/gridSize) * gridSize` at termination='extend'.
-        const lastN = Math.floor(this.gridHeight / gridSize + 1e-9);
+        // Integer counter avoids float-accumulation drift in `y += gridSize`.
+        const lastN = Math.floor(this.snappedRows(this.gridHeight, gridSize));
         for (let n = 0; n <= lastN; n++) {
             this.horizontalLine(linePosition(n, gridSize, offset));
         }
@@ -314,10 +326,8 @@ export class CanvasGridLines {
     drawSquared(gridSize, offset) {
         this.drawBaseline(gridSize, offset);
         // `fill`: vertical lines run to the canvas edge; otherwise they stop at the
-        // lower edge of the last horizontal line (last full grid row). Epsilon
-        // matches `drawBaseline` so float drift doesn't drop the bottom row at
-        // termination='extend'.
-        const lastN = Math.floor(this.gridHeight / gridSize + 1e-9);
+        // lower edge of the last horizontal line (last full grid row).
+        const lastN = Math.floor(this.snappedRows(this.gridHeight, gridSize));
         const lineLength = this.termination === 'fill'
             ? this.canvasHeight
             : Math.floor(lastN * gridSize) + this.lineWidthCanvas;
@@ -359,7 +369,7 @@ export class CanvasGridLines {
     drawRows(gridSize, offset) {
         if (!this.hGaps || !this.vGaps)
             return;
-        const verticalRange = Math.floor(this.gridHeight / gridSize + 1e-9);
+        const verticalRange = Math.floor(this.snappedRows(this.gridHeight, gridSize));
         // Draw horizontals first, remember where the last one actually lands —
         // the gap pattern usually stops short of `verticalRange`.
         let lastRow = 0;

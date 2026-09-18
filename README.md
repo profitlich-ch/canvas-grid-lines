@@ -183,6 +183,8 @@ Controls how the grid terminates at the bottom edge. Settable via `data-grid-ter
 - `fill` — same canvas height as `shorten`, but vertical lines run all the way down to the canvas edge.
 - `extend` — canvas is extended downward to the next multiple of `gridWidth / columns` so a horizontal bottom line can close the grid.
 
+A height within half a pixel of a whole row counts as that row in every mode, so sub-pixel layout rounding neither drops nor adds one. The container is measured with `getBoundingClientRect()`, which includes CSS transforms: a scaled container gets a grid for its scaled size.
+
 Termination has no effect on `columns` and `ribbons`: they draw no horizontal line, so there is nothing to close the bottom edge with, and their marks span the full canvas height in every mode.
 
 ### Color (optional, default: black)
